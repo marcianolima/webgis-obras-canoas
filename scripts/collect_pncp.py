@@ -13,6 +13,7 @@ import random
 import re
 import sys
 import time
+import unicodedata
 from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
@@ -22,7 +23,47 @@ ROOT = Path(__file__).resolve().parents[1]
 DEST = ROOT / "public/data/contratos.json"
 CNPJ = "88577416000118"
 BASE = "https://pncp.gov.br/api/consulta/v1/contratos"
-CANDIDATO = re.compile(r"\b(obra|obras|constru[cç][aã]o|reforma|pavimenta[cç][aã]o|drenagem|saneamento|infraestrutura|revitaliza[cç][aã]o|amplia[cç][aã]o|ponte|dique|conten[cç][aã]o|recupera[cç][aã]o de via|urbaniza[cç][aã]o|desassoreamento)\b", re.I)
+def sem_acento(value: object) -> str:
+    raw = str(value or "").lower()
+    return " ".join("".join(c for c in unicodedata.normalize("NFD", raw) if unicodedata.category(c) != "Mn").split())
+
+
+def classificar_objeto(objeto: str) -> str | None:
+    """Triagem conservadora: obra física, manutenção de infraestrutura ou projeto técnico.
+
+    Palavras 'mão de obra' e 'Secretaria de Obras' isoladas não caracterizam uma obra.
+    """
+    texto = sem_acento(objeto)
+    if re.search(r"\b(desinsetizacao|desratizacao|software|desktop as a service|teatral|banheiros quimicos|conserto e desbloqueio|locacao de maquinas|inversor de frequencia|locacao de moto bomba)\b", texto):
+        return None
+    if re.search(r"\bconstrucao de (roteiro|cenarios|conteudo|material publicitario)\b", texto):
+        return None
+    obra = re.search(r"\b(reforma|reformas|construcao|construcoes|restauro|restauracao|recuperacao|reconstituicao|restabelecimento|ampliacao|implantacao|pavimentacao|requalificacao|urbanizacao|revitalizacao)\b", texto)
+    if obra:
+        return "obra_fisica_candidata"
+    if re.search(r"\b(desobstrucao|hidrojateamento|manutencao e conservacao de vias|operacao eletromecanica|casas de bombas|estacoes de bombeamento|residuos descartados irregularmente|capina|rocagem|varricao)\b", texto):
+        return "manutencao_infraestrutura"
+    if re.search(r"\b(projetos? executivos?|servicos tecnicos de arquitetura|servicos tecnicos de engenharia|levantamento topografico|projeto urbanistico)\b", texto):
+        return "projeto_tecnico"
+    return None
+
+
+def extrair_bairro_objeto(objeto: str, nomes: list[str]) -> str | None:
+    """Aceita somente bairro explicitamente indicado como 'bairro X' no documento."""
+    texto = sem_acento(objeto)
+    encontrados = []
+    for nome in nomes:
+        ident = sem_acento(nome)
+        if re.search(r"\bbairro\s+(?:(?:do|da|de)\s+)?" + re.escape(ident) + r"\b", texto):
+            encontrados.append(nome)
+    return encontrados[0] if len(encontrados) == 1 else None
+
+
+def reclassificar(item: dict, nomes: list[str]) -> dict | None:
+    categoria = classificar_objeto(str(item.get("objeto") or ""))
+    if categoria is None:
+        return None
+    return {**item, "classificacao": categoria, "bairro": extrair_bairro_objeto(str(item.get("objeto") or ""), nomes)}
 
 
 def periodos(inicio: dt.date, fim: dt.date):
@@ -67,7 +108,8 @@ def normalize(record: dict) -> dict | None:
     if str(orgao.get("cnpj") or "").replace(".", "").replace("/", "").replace("-", "") != CNPJ:
         return None
     objeto = str(record.get("objetoContrato") or "").strip()
-    if not CANDIDATO.search(objeto):
+    classe = classificar_objeto(objeto)
+    if classe is None:
         return None
     ano, seq = record.get("anoContrato"), record.get("sequencialContrato")
     ident = str(record.get("numeroControlePNCP") or "")
@@ -92,7 +134,7 @@ def normalize(record: dict) -> dict | None:
         "data": (str(record.get("dataAssinatura") or "")[:10] or None),
         "url_fonte": f"https://pncp.gov.br/api/pncp/v1/orgaos/{CNPJ}/contratos/{ano}/{seq}",
         "obra_id": None,
-        "classificacao": "candidato_por_palavra_chave_na_descricao",
+        "classificacao": classe,
         "codigo_municipio_unidade": (record.get("unidadeOrgao") or {}).get("codigoIbge"),
         "numeroControlePNCP": ident,
     }
@@ -109,7 +151,10 @@ def main():
         atual = json.loads(args.destino.read_text(encoding="utf-8"))
     else:
         atual = {"items": []}
-    anterior = {x["id"]: x for x in atual.get("items", []) if isinstance(x, dict) and x.get("id")}
+    bairro_features = json.loads((ROOT / "public/data/bairros-oficiais.geojson").read_text(encoding="utf-8"))["features"]
+    nomes = [str(f["properties"]["BAIRRO"]) for f in bairro_features]
+    anteriores = [reclassificar(x, nomes) for x in atual.get("items", []) if isinstance(x, dict) and x.get("id")]
+    anterior = {x["id"]: x for x in anteriores if x is not None}
     inicio = dt.date.fromisoformat(args.inicio) if args.inicio else (fim - dt.timedelta(days=120) if anterior else dt.date(2024, 1, 1))
     if inicio > fim:
         parser.error("Data inicial maior que final")
@@ -126,7 +171,7 @@ def main():
                     continue
                 item = normalize(registro)
                 if item:
-                    anterior[item["id"]] = item
+                    anterior[item["id"]] = reclassificar(item, nomes) or item
                     total += 1
             pages = int(result.get("totalPaginas") or 0)
             if page >= pages or not data:
@@ -141,7 +186,7 @@ def main():
         "updatedAt": dt.datetime.now(dt.timezone.utc).isoformat(),
         "source": "https://pncp.gov.br/api/consulta/v1/contratos",
         "orgaoCnpj": CNPJ,
-        "note": "CONTRATOS CANDIDATOS por palavras-chave, não obras confirmadas; contrato não é pagamento, medição ou obra geolocalizada.",
+        "note": "TRIAGEM CONSERVADORA: contratos candidatos de obras físicas, manutenção de infraestrutura e projetos técnicos. Não são execução física confirmada, despesa paga nem obras geolocalizadas. Bairro somente quando mencionado explicitamente no objeto documental.",
         "items": sorted(anterior.values(), key=lambda x: x.get("data") or "", reverse=True),
         "janelaConsultada": {"inicio": inicio.isoformat(), "fim": fim.isoformat()},
     }
