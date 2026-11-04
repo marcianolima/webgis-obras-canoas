@@ -10,6 +10,7 @@ type Item={
  percentual:number|null;data:string|null;ano:string;orgao:string;bairro:string|null;
  bairroDocumento:string|null;qualidade:string;observacao:string;url:string;
  coords:[number,number][];categoria:string;equipamento:string|null;fornecedor:string|null;
+ pagoNotas:number|null;liquidadoNotas:number|null;empenhadoNotas:number|null;rpPagoNotas:number|null;notas:number|null;alertas:string[];
 };
 type Filtro={q:string;fonte:string;status:string;ano:string;bairro:string;local:string;tipo:string;ordem:string};
 type Charts={status:echarts.ECharts|null;bairros:echarts.ECharts|null;valores:echarts.ECharts|null};
@@ -34,7 +35,12 @@ export function itensAtlas(d:Dados):Item[]{
    data:p.data_cadastro,ano:dataYear(p.data_cadastro),orgao:p.organizacao_responsavel??'Obrasgov',
    bairro:coords.length===1?p.bairro:null,bairroDocumento:null,qualidade:p.precisao,
    observacao:coords.length>1?'Projeto com múltiplos locais; valor não é alocado integralmente a um único bairro.':'Local cadastrado oficialmente no Obrasgov; verificar precisão da geometria.',
-   url:p.url_fonte,coords,categoria:p.especie??p.natureza??'Projeto',equipamento:null,fornecedor:null};
+   url:p.url_fonte,coords,categoria:p.especie??p.natureza??'Projeto',equipamento:null,fornecedor:null,
+   pagoNotas:finite(p.execucao_financeira_notas?.valor_pago_notas),
+   empenhadoNotas:finite(p.execucao_financeira_notas?.valor_empenhado_notas),
+   liquidadoNotas:finite(p.execucao_financeira_notas?.valor_liquidado_notas),
+   rpPagoNotas:finite(p.execucao_financeira_notas?.valor_restos_a_pagar_pago_notas),
+   notas:p.execucao_financeira_notas?.qtd_notas_unicas??null,alertas:p.alertas_qualidade??[]};
  });
  const pncp=d.intervencoes.features.map((f):Item=>{
   const p=(f as ContratoEspacial).properties;
@@ -43,7 +49,8 @@ export function itensAtlas(d:Dados):Item[]{
    percentual:null,data:p.data_assinatura,ano:dataYear(p.data_assinatura),orgao:'Prefeitura de Canoas',
    bairro:p.bairro, bairroDocumento:p.bairro_documentado,
    qualidade:p.qualidade_localizacao,observacao:p.descricao_localizacao??'Sem coordenada confirmada para o objeto. Contrato não comprova execução.',
-   url:p.url_fonte,coords:getPoint(f.geometry),categoria:p.classe,equipamento:p.equipamento,fornecedor:p.fornecedor};
+   url:p.url_fonte,coords:getPoint(f.geometry),categoria:p.classe,equipamento:p.equipamento,fornecedor:p.fornecedor,
+   pagoNotas:null,liquidadoNotas:null,empenhadoNotas:null,rpPagoNotas:null,notas:null,alertas:[]};
  });
  const municipal=d.obras.features.map((f):Item=>{
   const p=f.properties;
@@ -53,7 +60,8 @@ export function itensAtlas(d:Dados):Item[]{
    percentual:finite(p.percentual_execucao),data:p.inicio,ano:dataYear(p.inicio),orgao:p.orgao,
    bairro:p.bairro,bairroDocumento:p.bairro,qualidade:p.localizacao,
    observacao:'Cadastro municipal documentado. Consulte a fonte para confirmar etapa física.',
-   url:p.url_fonte,coords,categoria:p.tipo,equipamento:null,fornecedor:null};
+   url:p.url_fonte,coords,categoria:p.tipo,equipamento:null,fornecedor:null,
+   pagoNotas:finite(p.valor_pago),liquidadoNotas:finite(p.valor_liquidado),empenhadoNotas:finite(p.valor_empenhado),rpPagoNotas:null,notas:null,alertas:[]};
  });
  return [...fed,...pncp,...municipal];
 }
@@ -80,6 +88,9 @@ function itemDetalhe(item:Item):string{
  '<div><b>Situação física:</b> '+texto(statusName(item.status))+'</div>'+
  (item.percentual!=null?'<div><b>Execução física:</b> '+numero(item.percentual)+'% (Obrasgov)</div>':'<div><b>Execução física:</b> não informada</div>')+
  '<div><b>'+texto(item.faseValor)+':</b> '+moeda(item.valor)+'</div>'+
+ (item.pagoNotas!=null?'<div><b>Pagamento registrado nas notas vinculadas:</b> '+moeda(item.pagoNotas)+'</div>':'')+
+ (item.empenhadoNotas!=null?'<div><b>Empenhado nas notas vinculadas:</b> '+moeda(item.empenhadoNotas)+'</div>':'')+
+ (item.alertas.length?'<div><b>Alertas de qualidade:</b> '+texto(item.alertas.join('; '))+'</div>':'')+
  '<div><b>Bairro:</b> '+texto(item.bairro??'Não atribuível')+'</div>'+
  (item.equipamento?'<div><b>Equipamento:</b> '+texto(item.equipamento)+'</div>':'')+
  '<small>'+texto(item.observacao)+'</small>'+
@@ -98,14 +109,18 @@ function listar(itens:Item[],f:Filtro):Item[]{
  f.ordem==='status'?a.status.localeCompare(b.status,'pt-BR'):(b.valor??-1)-(a.valor??-1));
  return sorted;
 }
-export function bairroStats(list:Item[]):Map<string,{fed:number;pncp:number;valFed:number|null;valPncp:number|null}>{
- const map=new Map<string,{fed:number;pncp:number;valFed:number|null;valPncp:number|null}>();
+type BairroSum={fed:number;pncp:number;valFed:number|null;valPncp:number|null;pagoFed:number|null;liquidadoFed:number|null;empenhadoFed:number|null};
+export function bairroStats(list:Item[]):Map<string,BairroSum>{
+ const map=new Map<string,BairroSum>();
  for(const item of list){
   if(!item.bairro||item.coords.length!==1)continue;
-  const curr=map.get(item.bairro)??{fed:0,pncp:0,valFed:null,valPncp:null};
+  const curr=map.get(item.bairro)??{fed:0,pncp:0,valFed:null,valPncp:null,pagoFed:null,liquidadoFed:null,empenhadoFed:null};
   if(item.fonte==='obrasgov'){
    curr.fed++;
    if(item.valor!=null)curr.valFed=(curr.valFed??0)+item.valor;
+   if(item.pagoNotas!=null)curr.pagoFed=(curr.pagoFed??0)+item.pagoNotas;
+   if(item.liquidadoNotas!=null)curr.liquidadoFed=(curr.liquidadoFed??0)+item.liquidadoNotas;
+   if(item.empenhadoNotas!=null)curr.empenhadoFed=(curr.empenhadoFed??0)+item.empenhadoNotas;
   }else if(item.fonte==='pncp'){
    curr.pncp++;
    if(item.valor!=null)curr.valPncp=(curr.valPncp??0)+item.valor;
@@ -122,7 +137,7 @@ function listRows(items:Item[]):string{
  '<td><b>'+texto(item.bairro??item.bairroDocumento??'Não informado')+'</b><small>'+texto(item.coords.length?(item.fonte==='pncp'?'Referência do equipamento':'Geometria Obrasgov'):'Sem ponto validado')+'</small>'+
  (item.coords.length?'<button class="atlas-map-focus" data-focus="'+texto(item.id)+'">Ver no mapa</button>':'')+'</td>'+
  '<td><b>'+moeda(item.valor)+'</b><small>'+texto(item.faseValor)+'</small></td>'+
- '<td>'+(item.percentual!=null?numero(item.percentual)+'%':'N/D')+'<small>'+texto(item.categoria)+'</small></td>'+
+ '<td>'+(item.percentual!=null?numero(item.percentual)+'%':'N/D')+'<small>'+texto(item.categoria)+'</small>'+(item.pagoNotas!=null?'<small>Pago em notas: '+moeda(item.pagoNotas)+'</small>':'')+'</td>'+
  '<td><a href="'+texto(validLink(item.url))+'" target="_blank" rel="noopener noreferrer">Documento ↗</a></td></tr>').join('')+'</tbody></table></div>'+
  (items.length>220?'<small class="subtle">Exibidos 220 registros; use os filtros ou exporte o conjunto completo.</small>':'');
 }
@@ -256,6 +271,7 @@ export function mountAtlas(d:Dados,goReview:()=>void):()=>void{
    '<div><span>Obrasgov com execução informada</span><b>'+inteiro(officialProgress.length)+'</b></div>'+
    '<div><span>Em execução no Obrasgov</span><b>'+inteiro(gov.filter(x=>normal(x.status)==='em execucao').length)+'</b></div>'+
    '<div><span>Concluídas no Obrasgov</span><b>'+inteiro(gov.filter(x=>normal(x.status)==='concluida').length)+'</b></div>'+
+   '<div><span>Obrasgov com notas financeiras vinculadas</span><b>'+inteiro(gov.filter(x=>(x.notas??0)>0).length)+'</b></div>'+
    '<div><span>Contratos PNCP (status físico N/D)</span><b>'+inteiro(pncp.length)+'</b></div>';
   const count=document.getElementById('atlas-results');if(count)count.textContent=inteiro(filtered.length)+' registros no recorte · '+inteiro(geoloc.length)+' com ponto validado';
   const countMap=document.getElementById('atlas-count-map');if(countMap)countMap.textContent=inteiro(geoloc.length)+' registros localizados';
@@ -269,7 +285,7 @@ export function mountAtlas(d:Dados,goReview:()=>void):()=>void{
   input?.addEventListener(name==='q'?'input':'change',()=>{(f as unknown as Record<string,string>)[name]=input.value;update();});
  }
  document.getElementById('atlas-clear')?.addEventListener('click',()=>{Object.assign(f,filter0);for(const [name,id] of Object.entries(filterNames)){const el=document.getElementById(id) as HTMLInputElement|HTMLSelectElement|null;if(el)el.value=(f as unknown as Record<string,string>)[name];}update();});
- document.getElementById('atlas-export')?.addEventListener('click',()=>csv('obras-contratos-canoas-filtros.csv',['id','origem','titulo','natureza','situacao','execucao_percentual','valor','natureza_valor','ano','bairro_validado','bairro_documentado','qualidade_local','equipamento','fonte'],filtered.map(x=>[x.id,x.fonte,x.titulo,x.tipo,x.status,x.percentual,x.valor,x.faseValor,x.ano,x.bairro,x.bairroDocumento,x.qualidade,x.equipamento,x.url])));
+ document.getElementById('atlas-export')?.addEventListener('click',()=>csv('obras-contratos-canoas-filtros.csv',['id','origem','titulo','natureza','situacao','execucao_percentual','valor','natureza_valor','pago_notas','liquidado_notas','empenhado_notas','restos_pagos_notas','quantidade_notas','alertas','ano','bairro_validado','bairro_documentado','qualidade_local','equipamento','fonte'],filtered.map(x=>[x.id,x.fonte,x.titulo,x.tipo,x.status,x.percentual,x.valor,x.faseValor,x.pagoNotas,x.liquidadoNotas,x.empenhadoNotas,x.rpPagoNotas,x.notas,x.alertas.join(';'),x.ano,x.bairro,x.bairroDocumento,x.qualidade,x.equipamento,x.url])));
  document.getElementById('atlas-go-review')?.addEventListener('click',goReview);
  for(const id of ['atlas-choropleth','atlas-points','atlas-labels'])document.getElementById(id)?.addEventListener('change',paintVis);
  document.getElementById('atlas-table')?.addEventListener('click',e=>{
