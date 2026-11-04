@@ -34,7 +34,7 @@ Status aceitos: `planejada`, `licitacao`, `em_execucao`, `paralisada`, `concluid
 
 ## 6. Finanças
 
-Fonte prevista: [SICONFI / Tesouro Nacional](https://apidatalake.tesouro.gov.br/docs/siconfi/) (RREO, DCA, MSC) e os demonstrativos municipais. Dados fiscais são, em princípio, municipais. Atributos como demonstrativo, anexo, exercício, período, rubrica, valor e coluna contábil precisam estar presentes antes de integrar. Não somar linhas hierárquicas de demonstrativos; não converter investimento municipal em valor por bairro sem correspondência direta com intervenções.
+Fonte integrada: [SICONFI / Tesouro Nacional](https://apidatalake.tesouro.gov.br/docs/siconfi/) (RREO, DCA, MSC) e os demonstrativos municipais. O coletor `scripts/collect_siconfi.py` consulta a linha `cod_conta=Investimentos` do RREO-Anexo 01, distinguindo-a de `InvestimentosIntra`; extrai as colunas de despesas empenhadas, liquidadas e pagas, por exercício e período, sem agregá-las entre si. Dados fiscais são, em princípio, municipais. Atributos como demonstrativo, anexo, exercício, período, rubrica, valor e coluna contábil precisam estar presentes antes de integrar. Não somar linhas hierárquicas de demonstrativos; não converter investimento municipal em valor por bairro sem correspondência direta com intervenções.
 
 ## 7. Linhagem, estados e proteção
 
