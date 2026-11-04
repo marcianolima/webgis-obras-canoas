@@ -65,7 +65,7 @@ def extrair(rows: list[dict], ano: int, bimestre: int, fonte: str) -> list[dict]
     for chave, matches in por_coluna.items():
         if len(matches) != 1:
             if matches:
-                print(f"Aviso: {ano} {chave}: {len(matches)} linhas; valor omitido por ambiguidade")
+                print(f"Aviso: {ano} {chave}: {len(matches)} linhas; valor omitido por ambiguidade; amostra="+str([{k:row.get(k) for k in ("cod_conta","conta","coluna","valor","no_anexo")} for row in matches[:4]]))
             continue
         raw = matches[0].get("valor")
         try:
