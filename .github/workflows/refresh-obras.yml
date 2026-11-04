@@ -1,0 +1,28 @@
+name: Update validated works
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - data/input/obras.csv
+      - scripts/ingest_obras.py
+permissions:
+  contents: write
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s tests -p 'test_*.py' -v
+      - run: python scripts/ingest_obras.py
+      - name: Commit validated outputs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/data/obras.geojson
+          if ! git diff --cached --quiet; then
+            git commit -m "data: refresh audited works"
+            git push
+          fi
