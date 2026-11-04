@@ -68,15 +68,15 @@ function renderObras():string{return head('Obras públicas por bairro e situaç�
 function tabelaValores():string{
  const porBairro=new Map<string,Obra[]>();for(const b of bairros)porBairro.set(b,[]);
  for(const o of obras){const b=bairros.find(x=>slug(x)===slug(o.properties.bairro??''));if(b)porBairro.get(b)!.push(o);}
- const rows=[...porBairro.entries()].map(([b,arr])=>({b,arr,count:arr.length,total:totalVerificado(arr,'valor_contratado')})).sort((a,b)=>(b.total??-1)-(a.total??-1));
- return '<div class="table-wrap"><table><thead><tr><th>Bairro oficial</th><th>Obras com bairro validado</th><th>Valor contratado conhecido</th><th>Com localização</th></tr></thead><tbody>'+rows.map(x=>'<tr><td><b>'+texto(x.b)+'</b></td><td>'+(x.count?inteiro(x.count):'Não disponível')+'</td><td>'+moeda(x.total)+'</td><td>'+(x.arr.length?inteiro(x.arr.filter(o=>!!o.geometry).length):'N/D')+'</td></tr>').join('')+'</tbody></table></div>';
+ const rows=[...porBairro.entries()].map(([b,arr])=>{const pncp=dados.contratos.items.filter(c=>c.classificacao==='obra_fisica_candidata'&&slug(c.bairro??'')===slug(b));return {b,arr,count:arr.length,total:totalVerificado(arr,'valor_contratado'),pncp,valorPNCP:pncp.length?pncp.reduce((sum,c)=>sum+(c.valor??0),0):null};}).sort((a,b)=>(b.total??-1)-(a.total??-1));
+ return '<div class="table-wrap"><table><thead><tr><th>Bairro oficial</th><th>Obras com bairro validado</th><th>Valor contratado conhecido</th><th>Com localização</th><th>Contratos PNCP candidatos com bairro explícito</th><th>Valor global desses contratos (não pago)</th></tr></thead><tbody>'+rows.map(x=>'<tr><td><b>'+texto(x.b)+'</b></td><td>'+(x.count?inteiro(x.count):'Não disponível')+'</td><td>'+moeda(x.total)+'</td><td>'+(x.arr.length?inteiro(x.arr.filter(o=>!!o.geometry).length):'N/D')+'</td><td>'+(x.pncp.length?inteiro(x.pncp.length):'N/D')+'</td><td>'+moeda(x.valorPNCP)+'</td></tr>').join('')+'</tbody></table></div>';
 }
 function renderInvestimentos():string{
  const geobairro=obras.filter(o=>o.properties.bairro&&bairros.some(b=>slug(b)===slug(o.properties.bairro??'')));
  const total=totalVerificado(geobairro,'valor_contratado');
  return head('Distribuição territorial dos investimentos','Agregação por bairro apenas de obras com bairro comprovado, sem rateio de orçamento municipal.')+
  '<div class="kpis">'+card('Bairros oficiais',inteiro(bairros.length),'Referência cartográfica','▩')+card('Obras associadas a bairro',inteiro(geobairro.length),'Cadastro rastreável','⌖')+card('Valor atribuível aos bairros',moeda(total),'Sem imputações territoriais','R$','blue')+'</div>'+
- nota('Sem localização ou bairro validado, despesas de âmbito municipal <b>não podem ser distribuídas</b> entre os bairros. “Não disponível” não significa valor zero.')+
+ nota('Sem localização ou bairro validado, despesas de âmbito municipal <b>não podem ser distribuídas</b> entre os bairros. Contratos PNCP com bairro explicitamente citado aparecem em colunas separadas e <b>não</b> são computados como obras executadas. “Não disponível” não significa valor zero.')+
  '<section class="panel map-panel"><div class="panel-title"><h3>Distribuição cartográfica por bairro</h3><span class="chip">Cinza = informação não disponível</span></div><div class="map-frame"><div id="map-investimentos" role="application" aria-label="Mapa de valores contratados por bairro oficial com indicação de ausência de informação"></div></div><small id="investimentos-legend" class="subtle"></small></section>'+ '<section class="panel"><div class="panel-title"><h3>Investimentos por bairro</h3><button id="export-invest" class="btn soft">Exportar CSV</button></div>'+tabelaValores()+'</section>';
 }
 function renderEquipamentos():string{
