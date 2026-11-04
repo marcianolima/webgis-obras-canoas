@@ -1,7 +1,42 @@
 {
   "schemaVersion": 1,
-  "updatedAt": null,
+  "updatedAt": "2026-11-04T01:13:05.764986+00:00",
   "source": "https://apidatalake.tesouro.gov.br/docs/siconfi/",
-  "note": "Aguardando extração e conferência de rubricas, período e unidade contábil antes da publicação.",
-  "observacoes": []
+  "note": "Linha INVESTIMENTOS do RREO-Anexo 01; valores declarados pelo município. Não somar colunas PAGAS/LIQUIDADAS/EMPENHADAS ou atribuir a bairros. Linhas ambíguas são omitidas.",
+  "observacoes": [
+    {
+      "ano": 2022,
+      "categoria": "Investimentos — despesas pagas até 6º bimestre",
+      "valor": 119648410.08,
+      "fonte": "https://apidatalake.tesouro.gov.br/ords/cdwhprd/siconfi/tt/rreo?an_exercicio=2022&nr_periodo=6&co_tipo_demonstrativo=RREO&no_anexo=RREO-Anexo+01&id_ente=4304606",
+      "anexo": "RREO-Anexo 01",
+      "bimestre": 6,
+      "rubrica": "INVESTIMENTOS",
+      "coluna": "DESPESAS PAGAS ATÉ O BIMESTRE (j)",
+      "abrangencia": "municipal"
+    },
+    {
+      "ano": 2022,
+      "categoria": "Investimentos — despesas liquidadas até 6º bimestre",
+      "valor": 120330853.73,
+      "fonte": "https://apidatalake.tesouro.gov.br/ords/cdwhprd/siconfi/tt/rreo?an_exercicio=2022&nr_periodo=6&co_tipo_demonstrativo=RREO&no_anexo=RREO-Anexo+01&id_ente=4304606",
+      "anexo": "RREO-Anexo 01",
+      "bimestre": 6,
+      "rubrica": "INVESTIMENTOS",
+      "coluna": "DESPESAS LIQUIDADAS ATÉ O BIMESTRE (h)",
+      "abrangencia": "municipal"
+    },
+    {
+      "ano": 2022,
+      "categoria": "Investimentos — despesas empenhadas até 6º bimestre",
+      "valor": 212228824.34,
+      "fonte": "https://apidatalake.tesouro.gov.br/ords/cdwhprd/siconfi/tt/rreo?an_exercicio=2022&nr_periodo=6&co_tipo_demonstrativo=RREO&no_anexo=RREO-Anexo+01&id_ente=4304606",
+      "anexo": "RREO-Anexo 01",
+      "bimestre": 6,
+      "rubrica": "INVESTIMENTOS",
+      "coluna": "DESPESAS EMPENHADAS ATÉ O BIMESTRE (f)",
+      "abrangencia": "municipal"
+    }
+  ],
+  "anosConsultados": 5
 }
