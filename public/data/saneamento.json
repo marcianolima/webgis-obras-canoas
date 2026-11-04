@@ -5,9 +5,9 @@
   "fonte": "SINISA 2024, conforme síntese do Instituto Água e Saneamento",
   "fonteUrl": "https://www.aguaesaneamento.org.br/municipios-e-saneamento/rs/canoas",
   "fonteOficial": "https://www.gov.br/cidades/pt-br/acesso-a-informacao/acoes-e-programas/saneamento/sinisa/resultados-sinisa",
-  "referencia": "SINISA 2024 (coleta; consultar metadados do módulo para ano-base)",
+  "referencia": "SINISA 2024 — ano de referência 2023 (Ministério das Cidades)",
   "abrangencia": "municipal",
-  "observacao": "Indicadores agregados para Canoas. Não distribuir pelos 18 bairros ou 659 setores sem microdados territoriais verificáveis.",
+  "observacao": "Os indicadores agregados são municipais; SINISA 2024 utiliza ano de referência 2023 segundo o Ministério das Cidades. Não imputar redes, eventos ou valores aos 18 bairros ou 659 setores sem fonte geográfica. Os números derivam da síntese municipal Instituto Água e Saneamento.",
   "indicadores": [
     {
       "id": "agua_atendimento",
@@ -16,7 +16,7 @@
       "valor": 97.3,
       "unidade": "%",
       "descricao": "Percentual da população total atendida por serviço de abastecimento de água.",
-      "referencia": "SINISA 2024"
+      "referencia": "SINISA 2024 · ano-base 2023"
     },
     {
       "id": "agua_sem_acesso",
@@ -24,7 +24,7 @@
       "tema": "agua",
       "valor": 9826,
       "unidade": "habitantes",
-      "referencia": "SINISA 2024"
+      "referencia": "SINISA 2024 · ano-base 2023"
     },
     {
       "id": "agua_perdas",
@@ -32,7 +32,7 @@
       "tema": "agua",
       "valor": 46.6,
       "unidade": "%",
-      "referencia": "SINISA 2024"
+      "referencia": "SINISA 2024 · ano-base 2023"
     },
     {
       "id": "agua_hidrometracao",
@@ -40,7 +40,7 @@
       "tema": "agua",
       "valor": 99.9,
       "unidade": "%",
-      "referencia": "SINISA 2024"
+      "referencia": "SINISA 2024 · ano-base 2023"
     },
     {
       "id": "esgoto_atendimento",
@@ -49,7 +49,7 @@
       "valor": 62,
       "unidade": "%",
       "descricao": "Cobertura do serviço de esgotamento sanitário; não confundir com coleta ou tratamento sobre o esgoto gerado.",
-      "referencia": "SINISA 2024"
+      "referencia": "SINISA 2024 · ano-base 2023"
     },
     {
       "id": "esgoto_sem_coleta",
@@ -57,7 +57,7 @@
       "tema": "esgoto",
       "valor": 136778,
       "unidade": "habitantes",
-      "referencia": "SINISA 2024"
+      "referencia": "SINISA 2024 · ano-base 2023"
     },
     {
       "id": "esgoto_coleta",
@@ -65,7 +65,7 @@
       "tema": "esgoto",
       "valor": 21.9,
       "unidade": "%",
-      "referencia": "SINISA 2024"
+      "referencia": "SINISA 2024 · ano-base 2023"
     },
     {
       "id": "esgoto_tratamento_gerado",
@@ -73,7 +73,7 @@
       "tema": "esgoto",
       "valor": 21.9,
       "unidade": "%",
-      "referencia": "SINISA 2024"
+      "referencia": "SINISA 2024 · ano-base 2023"
     },
     {
       "id": "residuos_coleta",
@@ -81,7 +81,7 @@
       "tema": "residuos",
       "valor": 100,
       "unidade": "%",
-      "referencia": "SINISA 2024"
+      "referencia": "SINISA 2024 · ano-base 2023"
     },
     {
       "id": "drenagem_risco",
@@ -90,7 +90,7 @@
       "valor": 43.5,
       "unidade": "%",
       "descricao": "Indicador municipal declarado; não identifica quais domicílios ou bairros estão sujeitos ao risco.",
-      "referencia": "SINISA 2024"
+      "referencia": "SINISA 2024 · ano-base 2023"
     },
     {
       "id": "drenagem_rede",
@@ -98,7 +98,52 @@
       "tema": "drenagem",
       "valor": 96.8,
       "unidade": "%",
-      "referencia": "SINISA 2024"
+      "referencia": "SINISA 2024 · ano-base 2023"
+    },
+    {
+      "id": "esgoto_tratado_coletado",
+      "nome": "Esgoto tratado sobre o volume coletado",
+      "tema": "esgoto",
+      "valor": 100,
+      "unidade": "%",
+      "descricao": "Parcela do volume de esgotos coletados que recebe tratamento. Não equivale ao percentual do esgoto total gerado que é tratado.",
+      "referencia": "SINISA 2024 · ano-base 2023"
+    },
+    {
+      "id": "agua_consumo_per_capita",
+      "nome": "Consumo médio de água por pessoa",
+      "tema": "agua",
+      "valor": 176.7,
+      "unidade": "L/hab./dia",
+      "descricao": "Consumo médio diário de água reportado pelo prestador.",
+      "referencia": "SINISA 2024 · ano-base 2023"
+    },
+    {
+      "id": "agua_tarifa_media",
+      "nome": "Tarifa média de água",
+      "tema": "agua",
+      "valor": 11.3,
+      "unidade": "R$/m³",
+      "descricao": "Valor médio por metro cúbico informado pelo prestador de serviços.",
+      "referencia": "SINISA 2024 · ano-base 2023"
+    },
+    {
+      "id": "drenagem_vias_pavimentadas",
+      "nome": "Vias urbanas pavimentadas",
+      "tema": "drenagem",
+      "valor": 97.9,
+      "unidade": "%",
+      "descricao": "Parcela das vias públicas urbanas pavimentadas e com meio-fio.",
+      "referencia": "SINISA 2024 · ano-base 2023"
+    },
+    {
+      "id": "drenagem_eventos",
+      "nome": "Ocorrências hidrológicas em cinco anos",
+      "tema": "drenagem",
+      "valor": 4,
+      "unidade": "eventos",
+      "descricao": "Quantidade declarada de enxurradas, inundações ou alagamentos nos cinco anos anteriores à declaração; não se dispõe das coordenadas das ocorrências.",
+      "referencia": "SINISA 2024 · ano-base 2023"
     }
   ]
 }
