@@ -16,6 +16,7 @@ import sys
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from collections import Counter
 from pathlib import Path
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
@@ -215,6 +216,32 @@ def coletar(detalhar_exec: bool = True) -> dict:
     features.sort(key=lambda f: f["properties"]["id"])
     if len(features) != len(d):
         raise RuntimeError("Contagem de projetos divergente; não publicar")
+    # O ponto [-51.18102,-29.91869] foi reutilizado por vários projetos
+    # heterogêneos (SES, urbanização, drenagem etc.). Repetições em escala
+    # municipal são indício de pino genérico, não de sítio de intervenção.
+    frequencias = Counter(
+        tuple(round(v, 5) for v in f["geometry"]["coordinates"])
+        for f in features if f["geometry"] and f["geometry"]["type"] == "Point"
+    )
+    pontos_genericos = {pt for pt, count in frequencias.items() if count >= 5}
+    for f in features:
+        p = f["properties"]
+        p["alertas_qualidade"] = []
+        geometria = f["geometry"]
+        if geometria and geometria["type"] == "Point":
+            pt = tuple(round(v, 5) for v in geometria["coordinates"])
+            if pt in pontos_genericos:
+                p["alertas_qualidade"].append("pino_generico_repetido_em_projetos_distintos")
+                p["coordenada_para_revisao"] = geometria["coordinates"]
+                p["precisao"] = "localizacao_administrativa_nao_homologada"
+                p["bairro"] = None
+                p["bairros_geometria"] = []
+                p["quantidade_pontos"] = 0
+                f["geometry"] = None
+        status = str(p.get("situacao") or "").lower()
+        percentual = p.get("percentual_execucao")
+        if "conclu" in status and percentual is not None and percentual < 100:
+            p["alertas_qualidade"].append("situacao_concluida_com_percentual_inferior_100")
     return {"type": "FeatureCollection", "metadata": {
         "fonte": BASE, "codigoMunicipio": 4304606,
         "consultadoEm": dt.datetime.now(dt.timezone.utc).isoformat(),
@@ -223,6 +250,8 @@ def coletar(detalhar_exec: bool = True) -> dict:
         "comPontosValidos": sum(f["geometry"] is not None for f in features),
         "semPontosValidos": sum(f["geometry"] is None for f in features),
         "comExecucaoFisica": sum(f["properties"]["percentual_execucao"] is not None for f in features),
+        "pinosGenericosRejeitados":sum("pino_generico_repetido_em_projetos_distintos" in f["properties"]["alertas_qualidade"] for f in features),
+        "inconsistenciasSituacaoExecucao":sum("situacao_concluida_com_percentual_inferior_100" in f["properties"]["alertas_qualidade"] for f in features),
         "nota": "Obrasgov: projetos cadastrados com geometria associada a Canoas; pontos internos à malha oficial GeoCanoas. Valor previsto não é pago nem contratado. Situação declarada pode estar desatualizada."
     }, "features": features}
 
