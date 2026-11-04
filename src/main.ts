@@ -1,7 +1,7 @@
 import * as echarts from 'echarts';
 import {carregar,obrasList,texto,inteiro,numero,moeda,nomesStatus,nomesTemas,bairroDaFeicao,totalVerificado,anoRef} from './data';
 import type {Dados,Obra,StatusObra,Indicador} from './data';
-import {criarMapa} from './map';
+import {criarMapa,criarMapaInvestimentos} from './map';
 import './style.css';
 
 type Page='painel'|'mapa'|'obras'|'investimentos'|'equipamentos'|'contratos'|'financas'|'saneamento'|'setores'|'fontes';
@@ -77,7 +77,7 @@ function renderInvestimentos():string{
  return head('Distribuição territorial dos investimentos','Agregação por bairro apenas de obras com bairro comprovado, sem rateio de orçamento municipal.')+
  '<div class="kpis">'+card('Bairros oficiais',inteiro(bairros.length),'Referência cartográfica','▩')+card('Obras associadas a bairro',inteiro(geobairro.length),'Cadastro rastreável','⌖')+card('Valor atribuível aos bairros',moeda(total),'Sem imputações territoriais','R$','blue')+'</div>'+
  nota('Sem localização ou bairro validado, despesas de âmbito municipal <b>não podem ser distribuídas</b> entre os bairros. “Não disponível” não significa valor zero.')+
- '<section class="panel"><div class="panel-title"><h3>Investimentos por bairro</h3><button id="export-invest" class="btn soft">Exportar CSV</button></div>'+tabelaValores()+'</section>';
+ '<section class="panel map-panel"><div class="panel-title"><h3>Distribuição cartográfica por bairro</h3><span class="chip">Cinza = informação não disponível</span></div><div class="map-frame"><div id="map-investimentos" role="application" aria-label="Mapa de valores contratados por bairro oficial com indicação de ausência de informação"></div></div><small id="investimentos-legend" class="subtle"></small></section>'+ '<section class="panel"><div class="panel-title"><h3>Investimentos por bairro</h3><button id="export-invest" class="btn soft">Exportar CSV</button></div>'+tabelaValores()+'</section>';
 }
 function renderEquipamentos():string{
  const eq=obras.filter(o=>/escola|emei|ubs|hospital|posto de sa[uú]de|creche|quadra|centro comunit[aá]rio|pra[cç]a|gin[aá]sio/i.test(o.properties.tipo+' '+o.properties.titulo));
@@ -158,6 +158,7 @@ function render():void{
  document.getElementById('mobile-backdrop')?.addEventListener('click',()=>document.body.classList.remove('menu-open'));
  document.getElementById('theme-toggle')?.addEventListener('click',()=>{tema=tema==='claro'?'escuro':'claro';document.documentElement.dataset.theme=tema;localStorage.setItem('obras-tema',tema);render();});
  if(pagina==='mapa'||pagina==='setores')mapa=criarMapa(dados,pagina==='mapa'?'obras':'setores');
+ if(pagina==='investimentos')mapa=criarMapaInvestimentos(dados);
  if(pagina==='saneamento')criarGrafico();
  if(pagina==='financas'){criarGraficoFinancas();document.getElementById('export-financas')?.addEventListener('click',exportarFinancas);}
  if(pagina==='obras')bindFiltros();
