@@ -14,6 +14,15 @@ export type ObraFederalProps={
  data_inicio_prevista:string|null;data_fim_prevista:string|null;data_inicio_real:string|null;data_fim_real:string|null;data_cadastro:string|null;
  endereco_declarado:string|null;bairro:string|null;bairros_geometria:string[];quantidade_pontos:number;precisao:string;
  origem_geometria:string[];codigo_ibge_geometria:number;url_fonte:string;
+ alertas_qualidade?:string[];
+ coordenada_para_revisao?:[number,number];
+ execucao_financeira_notas?:{
+  qtd_notas_unicas:number;qtd_notas_ambiguas_excluidas:number;
+  qtd_registros_sem_numero:number;
+  valor_empenhado_notas:number|null;valor_liquidado_notas:number|null;
+  valor_pago_notas:number|null;valor_restos_a_pagar_pago_notas:number|null;
+  metodo:string;
+ }|null;
 };
 export type ContratoEspacialProps={
  id:string;id_contrato:string;numero_contrato:string|null;titulo:string;objeto:string;valor:number|null;
