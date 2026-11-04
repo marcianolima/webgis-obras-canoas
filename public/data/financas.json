@@ -1,9 +1,141 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-04T01:15:19.843260+00:00",
+  "updatedAt": "2026-11-04T01:17:57.445439+00:00",
   "source": "https://apidatalake.tesouro.gov.br/docs/siconfi/",
-  "note": "Linha INVESTIMENTOS do RREO-Anexo 01; valores declarados pelo município. Não somar colunas PAGAS/LIQUIDADAS/EMPENHADAS ou atribuir a bairros. Linhas ambíguas são omitidas.",
+  "note": "Linha INVESTIMENTOS (sem InvestimentosIntra) do RREO-Anexo 01; valores declarados pelo município. Não somar colunas PAGAS/LIQUIDADAS/EMPENHADAS ou atribuir a bairros. Linhas ambíguas são omitidas.",
   "observacoes": [
+    {
+      "ano": 2026,
+      "categoria": "Investimentos — despesas pagas até 4º bimestre",
+      "valor": 29173738.82,
+      "fonte": "https://apidatalake.tesouro.gov.br/ords/cdwhprd/siconfi/tt/rreo?an_exercicio=2026&nr_periodo=4&co_tipo_demonstrativo=RREO&no_anexo=RREO-Anexo+01&id_ente=4304606",
+      "anexo": "RREO-Anexo 01",
+      "bimestre": 4,
+      "rubrica": "INVESTIMENTOS",
+      "coluna": "DESPESAS PAGAS ATÉ O BIMESTRE (j)",
+      "abrangencia": "municipal"
+    },
+    {
+      "ano": 2026,
+      "categoria": "Investimentos — despesas liquidadas até 4º bimestre",
+      "valor": 34616526.2,
+      "fonte": "https://apidatalake.tesouro.gov.br/ords/cdwhprd/siconfi/tt/rreo?an_exercicio=2026&nr_periodo=4&co_tipo_demonstrativo=RREO&no_anexo=RREO-Anexo+01&id_ente=4304606",
+      "anexo": "RREO-Anexo 01",
+      "bimestre": 4,
+      "rubrica": "INVESTIMENTOS",
+      "coluna": "DESPESAS LIQUIDADAS ATÉ O BIMESTRE (h)",
+      "abrangencia": "municipal"
+    },
+    {
+      "ano": 2026,
+      "categoria": "Investimentos — despesas empenhadas até 4º bimestre",
+      "valor": 125283692.06,
+      "fonte": "https://apidatalake.tesouro.gov.br/ords/cdwhprd/siconfi/tt/rreo?an_exercicio=2026&nr_periodo=4&co_tipo_demonstrativo=RREO&no_anexo=RREO-Anexo+01&id_ente=4304606",
+      "anexo": "RREO-Anexo 01",
+      "bimestre": 4,
+      "rubrica": "INVESTIMENTOS",
+      "coluna": "DESPESAS EMPENHADAS ATÉ O BIMESTRE (f)",
+      "abrangencia": "municipal"
+    },
+    {
+      "ano": 2025,
+      "categoria": "Investimentos — despesas pagas até 6º bimestre",
+      "valor": 63383795.97,
+      "fonte": "https://apidatalake.tesouro.gov.br/ords/cdwhprd/siconfi/tt/rreo?an_exercicio=2025&nr_periodo=6&co_tipo_demonstrativo=RREO&no_anexo=RREO-Anexo+01&id_ente=4304606",
+      "anexo": "RREO-Anexo 01",
+      "bimestre": 6,
+      "rubrica": "INVESTIMENTOS",
+      "coluna": "DESPESAS PAGAS ATÉ O BIMESTRE (j)",
+      "abrangencia": "municipal"
+    },
+    {
+      "ano": 2025,
+      "categoria": "Investimentos — despesas liquidadas até 6º bimestre",
+      "valor": 85598910.39,
+      "fonte": "https://apidatalake.tesouro.gov.br/ords/cdwhprd/siconfi/tt/rreo?an_exercicio=2025&nr_periodo=6&co_tipo_demonstrativo=RREO&no_anexo=RREO-Anexo+01&id_ente=4304606",
+      "anexo": "RREO-Anexo 01",
+      "bimestre": 6,
+      "rubrica": "INVESTIMENTOS",
+      "coluna": "DESPESAS LIQUIDADAS ATÉ O BIMESTRE (h)",
+      "abrangencia": "municipal"
+    },
+    {
+      "ano": 2025,
+      "categoria": "Investimentos — despesas empenhadas até 6º bimestre",
+      "valor": 212198767.75,
+      "fonte": "https://apidatalake.tesouro.gov.br/ords/cdwhprd/siconfi/tt/rreo?an_exercicio=2025&nr_periodo=6&co_tipo_demonstrativo=RREO&no_anexo=RREO-Anexo+01&id_ente=4304606",
+      "anexo": "RREO-Anexo 01",
+      "bimestre": 6,
+      "rubrica": "INVESTIMENTOS",
+      "coluna": "DESPESAS EMPENHADAS ATÉ O BIMESTRE (f)",
+      "abrangencia": "municipal"
+    },
+    {
+      "ano": 2024,
+      "categoria": "Investimentos — despesas pagas até 6º bimestre",
+      "valor": 76230779.36,
+      "fonte": "https://apidatalake.tesouro.gov.br/ords/cdwhprd/siconfi/tt/rreo?an_exercicio=2024&nr_periodo=6&co_tipo_demonstrativo=RREO&no_anexo=RREO-Anexo+01&id_ente=4304606",
+      "anexo": "RREO-Anexo 01",
+      "bimestre": 6,
+      "rubrica": "INVESTIMENTOS",
+      "coluna": "DESPESAS PAGAS ATÉ O BIMESTRE (j)",
+      "abrangencia": "municipal"
+    },
+    {
+      "ano": 2024,
+      "categoria": "Investimentos — despesas liquidadas até 6º bimestre",
+      "valor": 84179497.42,
+      "fonte": "https://apidatalake.tesouro.gov.br/ords/cdwhprd/siconfi/tt/rreo?an_exercicio=2024&nr_periodo=6&co_tipo_demonstrativo=RREO&no_anexo=RREO-Anexo+01&id_ente=4304606",
+      "anexo": "RREO-Anexo 01",
+      "bimestre": 6,
+      "rubrica": "INVESTIMENTOS",
+      "coluna": "DESPESAS LIQUIDADAS ATÉ O BIMESTRE (h)",
+      "abrangencia": "municipal"
+    },
+    {
+      "ano": 2024,
+      "categoria": "Investimentos — despesas empenhadas até 6º bimestre",
+      "valor": 277068535.71,
+      "fonte": "https://apidatalake.tesouro.gov.br/ords/cdwhprd/siconfi/tt/rreo?an_exercicio=2024&nr_periodo=6&co_tipo_demonstrativo=RREO&no_anexo=RREO-Anexo+01&id_ente=4304606",
+      "anexo": "RREO-Anexo 01",
+      "bimestre": 6,
+      "rubrica": "INVESTIMENTOS",
+      "coluna": "DESPESAS EMPENHADAS ATÉ O BIMESTRE (f)",
+      "abrangencia": "municipal"
+    },
+    {
+      "ano": 2023,
+      "categoria": "Investimentos — despesas pagas até 6º bimestre",
+      "valor": 102885001.34,
+      "fonte": "https://apidatalake.tesouro.gov.br/ords/cdwhprd/siconfi/tt/rreo?an_exercicio=2023&nr_periodo=6&co_tipo_demonstrativo=RREO&no_anexo=RREO-Anexo+01&id_ente=4304606",
+      "anexo": "RREO-Anexo 01",
+      "bimestre": 6,
+      "rubrica": "INVESTIMENTOS",
+      "coluna": "DESPESAS PAGAS ATÉ O BIMESTRE (j)",
+      "abrangencia": "municipal"
+    },
+    {
+      "ano": 2023,
+      "categoria": "Investimentos — despesas liquidadas até 6º bimestre",
+      "valor": 104146936.41,
+      "fonte": "https://apidatalake.tesouro.gov.br/ords/cdwhprd/siconfi/tt/rreo?an_exercicio=2023&nr_periodo=6&co_tipo_demonstrativo=RREO&no_anexo=RREO-Anexo+01&id_ente=4304606",
+      "anexo": "RREO-Anexo 01",
+      "bimestre": 6,
+      "rubrica": "INVESTIMENTOS",
+      "coluna": "DESPESAS LIQUIDADAS ATÉ O BIMESTRE (h)",
+      "abrangencia": "municipal"
+    },
+    {
+      "ano": 2023,
+      "categoria": "Investimentos — despesas empenhadas até 6º bimestre",
+      "valor": 200363190.81,
+      "fonte": "https://apidatalake.tesouro.gov.br/ords/cdwhprd/siconfi/tt/rreo?an_exercicio=2023&nr_periodo=6&co_tipo_demonstrativo=RREO&no_anexo=RREO-Anexo+01&id_ente=4304606",
+      "anexo": "RREO-Anexo 01",
+      "bimestre": 6,
+      "rubrica": "INVESTIMENTOS",
+      "coluna": "DESPESAS EMPENHADAS ATÉ O BIMESTRE (f)",
+      "abrangencia": "municipal"
+    },
     {
       "ano": 2022,
       "categoria": "Investimentos — despesas pagas até 6º bimestre",
@@ -38,5 +170,5 @@
       "abrangencia": "municipal"
     }
   ],
-  "anosConsultados": 5
+  "anosConsultados": 6
 }
