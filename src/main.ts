@@ -93,11 +93,21 @@ function renderContratos():string{
  '<div class="link-grid"><div class="source-tile"><b>PNCP</b><p>Contratações e contratos públicos, com identificadores oficiais.</p>'+fonte('https://pncp.gov.br/app/contratos','Consultar portal')+'</div><div class="source-tile"><b>Obrasgov</b><p>Investimentos federais com informações físicas e georreferenciadas quando disponíveis.</p>'+fonte('https://www.gov.br/obrasgov/pt-br/acesso-a-informacao/dados-abertos-obrasgov','Acessar API')+'</div></div>';
 }
 function renderFinancas():string{
- const f=dados.financas.observacoes;return head('Finanças públicas e execução orçamentária','SICONFI, demonstrativos fiscais, execução e investimentos — com separação rigorosa entre empenhado, liquidado e pago.')+
- nota('Demonstrativos <b>agregados do SICONFI</b> têm escala municipal, não de bairro. Não atribuir despesas a obras ou bairros sem chaves de vinculação verificadas.')+
- '<section class="panel"><div class="panel-title"><h3>Demonstrativos incorporados</h3><span class="chip">'+inteiro(f.length)+' observações</span></div>'+
- (f.length?'<div class="table-wrap"><table><thead><tr><th>Ano</th><th>Rubrica</th><th>Valor</th><th>Fonte</th></tr></thead><tbody>'+f.map(x=>'<tr><td>'+x.ano+'</td><td>'+texto(x.categoria)+'</td><td>'+moeda(x.valor)+'</td><td>'+fonte(x.fonte,'Documento')+'</td></tr>').join('')+'</tbody></table></div>':vazio('Série fiscal em preparação','Nenhuma série orçamentária foi importada sem confirmar demonstrativo, rubrica, periodicidade e natureza dos valores.'))+'</section>'+
- '<div class="link-grid"><div class="source-tile"><h3>SICONFI / Tesouro Nacional</h3><p>RREO, DCA e matrizes contábeis de Canoas (código IBGE 4304606).</p>'+fonte('https://apidatalake.tesouro.gov.br/docs/siconfi/','Documentação da API')+'</div><div class="source-tile"><h3>Portal da Transparência</h3><p>Consulta local às despesas, contratos, medições e execução de obras.</p>'+fonte('https://www.canoas.rs.gov.br/','Prefeitura de Canoas')+'</div></div>';
+ const f=dados.financas.observacoes;
+ const anos=[...new Set(f.map(x=>x.ano))].sort((a,b)=>b-a);
+ const ult=anos[0];
+ const pago=f.find(x=>x.ano===ult&&x.categoria.includes('pagas'));
+ const empenhado=f.find(x=>x.ano===ult&&x.categoria.includes('empenhadas'));
+ return head('Finanças públicas e execução orçamentária','Investimentos municipais extraídos do SICONFI, com segregação por etapa de execução e período de referência.')+
+ nota('Dados do <b>RREO-Anexo 01 do Tesouro Nacional</b>, linha “Investimentos” (excluídas as linhas intraorçamentárias). São valores acumulados no exercício até o bimestre informado, <b>não</b> despesas por bairro nem custos de obras específicas. Valores empenhados, liquidados e pagos não devem ser somados.')+
+ '<div class="kpis">'+card('Exercícios com observações',inteiro(anos.length),'RREO municipal · SICONFI','▥')+
+ card('Investimentos pagos '+(ult??''),moeda(pago?.valor),pago?('Até '+((f.find(x=>x===pago) as typeof pago & {bimestre?:number})?.bimestre??'último')+'º bimestre'):'Sem dado verificado','R$','blue')+
+ card('Investimentos empenhados '+(ult??''),moeda(empenhado?.valor),'Não equivale a despesa paga','◈','gold')+
+ card('Linhas documentadas',inteiro(f.length),'Valores publicados com fonte direta','▤','purple')+'</div>'+
+ (f.length?'<section class="panel"><div class="panel-title"><div><span class="tag">SICONFI / INVESTIMENTOS</span><h3>Execução por exercício</h3></div></div><div class="chart" id="fin-chart" role="img" aria-label="Barras comparativas de investimentos empenhados, liquidados e pagos por ano"></div><small class="subtle">Períodos incompletos não são diretamente comparáveis com exercícios encerrados. As três etapas não são parcelas acumuláveis entre si.</small></section>':'')+
+ '<section class="panel"><div class="panel-title"><h3>Demonstrativos incorporados</h3><div class="panel-actions"><span class="chip">'+inteiro(f.length)+' observações</span> <button id="export-financas" class="btn soft" '+(f.length?'':'disabled')+'>Exportar CSV</button></div></div>'+
+ (f.length?'<div class="table-wrap"><table><thead><tr><th>Ano</th><th>Rubrica e fase da despesa</th><th>Valor declarado</th><th>Documento</th></tr></thead><tbody>'+f.map(x=>'<tr><td>'+x.ano+'</td><td>'+texto(x.categoria)+'</td><td>'+moeda(x.valor)+'</td><td>'+fonte(x.fonte,'RREO oficial')+'</td></tr>').join('')+'</tbody></table></div>':vazio('Série fiscal em preparação','Nenhuma série foi importada sem confirmar demonstrativo, rubrica, periodicidade e natureza dos valores.'))+'</section>'+
+ '<div class="link-grid"><div class="source-tile"><h3>SICONFI / Tesouro Nacional</h3><p>RREO, DCA e matrizes contábeis de Canoas (IBGE 4304606), com coleta automatizada e proveniência do anexo.</p>'+fonte('https://apidatalake.tesouro.gov.br/docs/siconfi/','Documentação da API')+'</div><div class="source-tile"><h3>Obras e pagamentos territorializados</h3><p>Pagamentos por contrato e obra dependem de chaves municipais verificadas; não são inferidos dos valores globais do RREO.</p>'+fonte('https://www.canoas.rs.gov.br/','Prefeitura de Canoas')+'</div></div>';
 }
 function indicadorCard(i:Indicador):string{
  const val=i.unidade==='%'?numero(i.valor)+'%':inteiro(i.valor)+' '+i.unidade;
@@ -149,6 +159,7 @@ function render():void{
  document.getElementById('theme-toggle')?.addEventListener('click',()=>{tema=tema==='claro'?'escuro':'claro';document.documentElement.dataset.theme=tema;localStorage.setItem('obras-tema',tema);render();});
  if(pagina==='mapa'||pagina==='setores')mapa=criarMapa(dados,pagina==='mapa'?'obras':'setores');
  if(pagina==='saneamento')criarGrafico();
+ if(pagina==='financas'){criarGraficoFinancas();document.getElementById('export-financas')?.addEventListener('click',exportarFinancas);}
  if(pagina==='obras')bindFiltros();
  if(pagina==='investimentos')document.getElementById('export-invest')?.addEventListener('click',exportarInvestimentos);
  if(pagina==='setores')document.getElementById('export-setores')?.addEventListener('click',exportarSetores);
@@ -166,6 +177,19 @@ function criarGrafico():void{
  const vals=ids.map(id=>dados.saneamento.indicadores.find(x=>x.id===id));
  chart.setOption({grid:{top:20,left:12,right:24,bottom:14,containLabel:true},tooltip:{trigger:'axis',axisPointer:{type:'shadow'},formatter:(params:unknown)=>{const a=params as {name:string;value:number}[];return a.map(p=>texto(p.name)+': '+numero(p.value)+'%').join('<br/>');}},xAxis:{type:'value',min:0,max:100,axisLabel:{formatter:'{value}%'}},yAxis:{type:'category',data:['Água','Esgoto','Coleta domiciliar','Risco de inundação'],axisLabel:{color:tema==='escuro'?'#d2e4ed':'#355061'}},series:[{type:'bar',data:vals.map(v=>v?.valor??null),barMaxWidth:22,itemStyle:{color:'#138b95',borderRadius:[0,6,6,0]},label:{show:true,position:'right',formatter:'{c}%'}}]});
  const resize=()=>{if(document.getElementById('saneamento-chart')===root)chart.resize();else window.removeEventListener('resize',resize);};window.addEventListener('resize',resize);
+}
+function criarGraficoFinancas():void{
+ const root=document.getElementById('fin-chart');if(!root)return;
+ const chart=echarts.init(root);charts.push(chart);
+ const data=dados.financas.observacoes;
+ const years=[...new Set(data.map(d=>d.ano))].sort((a,b)=>a-b);
+ const tipos=[{id:'empenhadas',label:'Empenhadas'},{id:'liquidadas',label:'Liquidadas'},{id:'pagas',label:'Pagas'}];
+ const format=(v:number)=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0}).format(v);
+ chart.setOption({grid:{left:20,right:18,top:40,bottom:40,containLabel:true},legend:{top:4,textStyle:{color:tema==='escuro'?'#d2e4ed':'#355061'}},tooltip:{trigger:'axis',valueFormatter:(v:unknown)=>typeof v==='number'?format(v):'N/D'},xAxis:{type:'category',data:years.map(String)},yAxis:{type:'value',axisLabel:{formatter:(v:number)=>new Intl.NumberFormat('pt-BR',{notation:'compact',maximumFractionDigits:1}).format(v)}},series:tipos.map(t=>({name:t.label,type:'bar',barMaxWidth:24,data:years.map(ano=>data.find(x=>x.ano===ano&&x.categoria.includes(t.id))?.valor??null)}))});
+ const resize=()=>{if(document.getElementById('fin-chart')===root)chart.resize();else window.removeEventListener('resize',resize);};window.addEventListener('resize',resize);
+}
+function exportarFinancas():void{
+ csvDownload('investimentos-municipais-siconfi-canoas.csv',['ano','categoria','valor','fonte'],dados.financas.observacoes.map(x=>[x.ano,x.categoria,x.valor,x.fonte]));
 }
 function csvDownload(filename:string,header:string[],rows:(string|number|null|undefined)[][]):void{
  const q=(x:unknown)=>'"'+String(x??'').replace(/"/g,'""')+'"';const txt=[header,...rows].map(row=>row.map(q).join(';')).join('\r\n');const blob=new Blob(['\ufeff',txt],{type:'text/csv;charset=utf-8'});const href=URL.createObjectURL(blob);const a=document.createElement('a');a.href=href;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(href),200);
