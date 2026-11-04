@@ -39,7 +39,7 @@ def classificar_objeto(objeto: str) -> str | None:
     if re.search(r"\bconstrucao de (roteiro|cenarios|conteudo|material publicitario)\b", texto):
         return None
     obra = re.search(r"\b(reforma|reformas|construcao|construcoes|restauro|restauracao|recuperacao|reconstituicao|restabelecimento|ampliacao|implantacao|pavimentacao|requalificacao|urbanizacao|revitalizacao)\b", texto)
-    if obra:
+    if obra or re.search(r"\b(?:execucao\s+(?:das?\s+)?obras?|obras?\s+(?:de|do|da|civis|complementares)|execucao\s+(?:do|da|de)\s+(?:dique|tunel|ponte|muro))\b", texto):
         return "obra_fisica_candidata"
     if re.search(r"\b(desobstrucao|hidrojateamento|manutencao e conservacao de vias|operacao eletromecanica|casas de bombas|estacoes de bombeamento|residuos descartados irregularmente|capina|rocagem|varricao)\b", texto):
         return "manutencao_infraestrutura"
