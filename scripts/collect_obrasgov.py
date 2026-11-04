@@ -110,6 +110,44 @@ def num(value: object) -> float | None:
         return None
 
 
+def resumir_empenhos(registros: list[dict]) -> dict:
+    """Somente campos publicados de notas vinculadas, sem confundir fases ou somar restos a pagar."""
+    chaves = ("valor_empenho", "liquidado", "pago", "rppago")
+    unique = {}
+    duplicados_conflitantes = set()
+    sem_id = 0
+    for item in registros:
+        if not isinstance(item, dict):
+            continue
+        # Evita contas repetidas por vínculos e relatórios. Sem número de nota, não somar.
+        numero = str(item.get("nr_empenho") or "").strip()
+        ug = str(item.get("ug_emitente") or "").strip()
+        if not numero or not ug:
+            sem_id += 1
+            continue
+        key = (numero, ug, str(item.get("sistema_origem_empenho") or ""))
+        values = tuple(num(item.get(k)) for k in chaves)
+        if key in unique and unique[key] != values:
+            duplicados_conflitantes.add(key)
+        else:
+            unique[key] = values
+    for key in duplicados_conflitantes:
+        unique.pop(key, None)
+    def soma(i: int) -> float | None:
+        vals = [row[i] for row in unique.values() if row[i] is not None]
+        return round(sum(vals), 2) if vals else None
+    return {
+        "qtd_notas_unicas":len(unique),
+        "qtd_notas_ambiguas_excluidas":len(duplicados_conflitantes),
+        "qtd_registros_sem_numero":sem_id,
+        "valor_empenhado_notas":soma(0),
+        "valor_liquidado_notas":soma(1),
+        "valor_pago_notas":soma(2),
+        "valor_restos_a_pagar_pago_notas":soma(3),
+        "metodo":"Soma de campos informados por nota de empenho única (UG, sistema, número), sem misturar fases e sem incluir notas ambíguas. NÃO representa automaticamente custo final do projeto.",
+    }
+
+
 def fisica_atual(registros: list[dict]) -> tuple[float | None, dict | None]:
     """Última observação; empate de datas com percentuais divergentes = inconclusivo."""
     valid = [r for r in registros if isinstance(r, dict) and num(r.get("percentual_execucao_fisica")) is not None
@@ -125,7 +163,7 @@ def fisica_atual(registros: list[dict]) -> tuple[float | None, dict | None]:
     return values.pop(), {"data": stamp, "instrumento": latest[0].get("tipo_instrumento")}
 
 
-def normalizar_projeto(p: dict, origens: list[dict], bairros: list[dict], fisica: list[dict]) -> dict:
+def normalizar_projeto(p: dict, origens: list[dict], bairros: list[dict], fisica: list[dict], empenhos: list[dict] | None = None) -> dict:
     pins = []
     for item in p.get("pins") or []:
         if not isinstance(item, dict):
@@ -142,6 +180,7 @@ def normalizar_projeto(p: dict, origens: list[dict], bairros: list[dict], fisica
     previstos = [x for x in investimentos if x is not None]
     valor_prev = round(sum(previstos), 2) if previstos else None
     execucao, meta_exec = fisica_atual(fisica)
+    financeiro = resumir_empenhos(empenhos) if empenhos is not None else None
     situacao = str(p.get("situacao") or "").strip() or "Não informada"
     # Não apresentar porcentagem ou estado inferido como se fosse declarado.
     props = {
@@ -154,6 +193,7 @@ def normalizar_projeto(p: dict, origens: list[dict], bairros: list[dict], fisica
         "status_fonte": "Obrasgov — declaração do órgão gestor",
         "percentual_execucao": execucao,
         "percentual_meta": meta_exec,
+        "execucao_financeira_notas": financeiro,
         "valor_previsto": valor_prev,
         "valor_natureza": "investimento previsto (não despesa executada)",
         "organizacao_responsavel": p.get("organizacao_resp"),
@@ -181,17 +221,18 @@ def carregar_referencias() -> list[dict]:
     return json.loads(GEO.read_text(encoding="utf-8"))["features"]
 
 
-def consultar_projeto(id_: str, origens: list[dict], bairros: list[dict], detalhar_exec: bool) -> dict:
+def consultar_projeto(id_: str, origens: list[dict], bairros: list[dict], detalhar_exec: bool, detalhar_fin: bool) -> dict:
     project = requisitar("projeto-investimento", {"id_projeto_investimento": id_}).get("data") or []
     if len(project) != 1 or str(project[0].get("id_projeto_investimento")) != id_:
         raise ValueError(f"Projeto {id_} sem identidade única verificável")
     fisica = []
     if detalhar_exec:
         fisica = requisitar("execucao-fisica", {"id_projeto_investimento": id_}).get("data") or []
-    return normalizar_projeto(project[0], origens, bairros, fisica)
+    empenhos = requisitar("empenho", {"id_projeto_investimento": id_}).get("data") or [] if detalhar_fin else None
+    return normalizar_projeto(project[0], origens, bairros, fisica, empenhos)
 
 
-def coletar(detalhar_exec: bool = True) -> dict:
+def coletar(detalhar_exec: bool = True, detalhar_fin: bool = True) -> dict:
     geos = requisitar("geometria", {"cod_ibge": 4304606})["data"]
     if any(str(g.get("cod_ibge")) != "4304606" or str(g.get("no_municipio") or "").lower() != "canoas" for g in geos):
         raise ValueError("Filtro geográfico retornou município divergente")
@@ -204,7 +245,7 @@ def coletar(detalhar_exec: bool = True) -> dict:
     # Retém observações anteriores se o coletor mudar a disponibilidade de algum campo opcional.
     features, errors = [], []
     with ThreadPoolExecutor(max_workers=4) as pool:
-        futures = {pool.submit(consultar_projeto, i, gs, bairros, detalhar_exec): i for i, gs in d.items()}
+        futures = {pool.submit(consultar_projeto, i, gs, bairros, detalhar_exec, detalhar_fin): i for i, gs in d.items()}
         for future in as_completed(futures):
             id_ = futures[future]
             try:
@@ -250,6 +291,7 @@ def coletar(detalhar_exec: bool = True) -> dict:
         "comPontosValidos": sum(f["geometry"] is not None for f in features),
         "semPontosValidos": sum(f["geometry"] is None for f in features),
         "comExecucaoFisica": sum(f["properties"]["percentual_execucao"] is not None for f in features),
+        "comExecucaoFinanceiraNotas":sum(f["properties"]["execucao_financeira_notas"] is not None and f["properties"]["execucao_financeira_notas"]["qtd_notas_unicas"]>0 for f in features),
         "pinosGenericosRejeitados":sum("pino_generico_repetido_em_projetos_distintos" in f["properties"]["alertas_qualidade"] for f in features),
         "inconsistenciasSituacaoExecucao":sum("situacao_concluida_com_percentual_inferior_100" in f["properties"]["alertas_qualidade"] for f in features),
         "nota": "Obrasgov: projetos cadastrados com geometria associada a Canoas; pontos internos à malha oficial GeoCanoas. Valor previsto não é pago nem contratado. Situação declarada pode estar desatualizada."
@@ -259,9 +301,10 @@ def coletar(detalhar_exec: bool = True) -> dict:
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--sem-execucao", action="store_true", help="Somente projeto, sem consultas de execução física")
+    parser.add_argument("--sem-financeiro", action="store_true", help="Não carregar notas de empenho vinculadas")
     parser.add_argument("--saida", type=Path, default=OUT)
     args = parser.parse_args()
-    geojson = coletar(detalhar_exec=not args.sem_execucao)
+    geojson = coletar(detalhar_exec=not args.sem_execucao, detalhar_fin=not args.sem_financeiro)
     args.saida.parent.mkdir(parents=True, exist_ok=True)
     tmp = args.saida.with_suffix(".tmp")
     tmp.write_text(json.dumps(geojson, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
