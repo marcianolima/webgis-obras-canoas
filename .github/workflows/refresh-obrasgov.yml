@@ -1,0 +1,49 @@
+name: Atualizar projetos oficiais do Obrasgov (Canoas)
+on:
+  push:
+    branches: [main]
+    paths:
+      - scripts/collect_obrasgov.py
+      - .github/workflows/refresh-obrasgov.yml
+  workflow_dispatch:
+  schedule:
+    - cron: '45 7 * * 3'
+permissions:
+  contents: write
+concurrency:
+  group: obrasgov-collector
+  cancel-in-progress: false
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 13
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s tests -p 'test_*.py' -v
+      - run: python scripts/collect_obrasgov.py
+      - name: Validar proveniência e geometria
+        run: |
+          python - <<'PY'
+          import json
+          j=json.load(open("public/data/obrasgov.geojson"))
+          assert j["metadata"]["codigoMunicipio"]==4304606
+          assert len({f["properties"]["id"] for f in j["features"]}) == len(j["features"])
+          assert all(f["properties"]["url_fonte"].startswith("https://") for f in j["features"])
+          print("Obrasgov:",j["metadata"])
+          PY
+      - name: Publicar somente se íntegro
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add public/data/obrasgov.geojson
+          if ! git diff --cached --quiet; then
+            git commit -m "data: atualizar obras federais Obrasgov georreferenciadas em Canoas"
+            for i in 1 2 3 4 5; do
+              git pull --rebase origin main && git push origin HEAD:main && break
+              if [ "$i" -eq 5 ]; then exit 1; fi
+              sleep $((i*3))
+            done
+          fi

@@ -1,0 +1,10 @@
+{
+  "type": "FeatureCollection",
+  "metadata": {
+    "fonte": "https://api-publica.obrasgov.gestao.gov.br/obras",
+    "codigoMunicipio": 4304606,
+    "consultadoEm": null,
+    "nota": "Aguardando primeira coleta íntegra; não existem pontos simulados"
+  },
+  "features": []
+}
