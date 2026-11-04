@@ -86,8 +86,8 @@ export function criarMapaInvestimentos(d:Dados):maplibregl.Map|null{
   pncp_count:{field:'n_pncp',label:'Contratos PNCP com referência de equipamento',money:false},
   pncp_value:{field:'v_pncp_mapa',label:'Valor global PNCP com referência de equipamento',money:true},
  };
- const maxVal=(field:string)=>Math.max(1,...features.map(f=>f.properties[field]).filter((v):v is number=>typeof v==='number'&&Number.isFinite(v)));
- let key=select?.value in fields?select!.value:'gov_count';
+ const maxVal=(field:string)=>Math.max(1,...features.map(f=>(f.properties as Record<string,unknown>)[field]).filter((v):v is number=>typeof v==='number'&&Number.isFinite(v)));
+ let key=select && select.value in fields?select.value:'gov_count';
  const paint=():unknown[]=>{
   const m=fields[key];
   const field=m.field;
