@@ -76,6 +76,9 @@ export function criarMapaInvestimentos(d:Dados):maplibregl.Map|null{
   const municipal=totalVerificado(o,'valor_contratado');
   return {...f,properties:{...(f.properties??{}),
    n_gov:b?.fed??0,v_gov:b?.valFed??null,v_gov_mapa:b?.valFed??-1,
+   v_gov_pago:b?.pagoFed??null,v_gov_pago_mapa:b?.pagoFed??-1,
+   v_gov_empenhado:b?.empenhadoFed??null,v_gov_empenhado_mapa:b?.empenhadoFed??-1,
+   v_gov_liquidado:b?.liquidadoFed??null,v_gov_liquidado_mapa:b?.liquidadoFed??-1,
    n_pncp:b?.pncp??0,v_pncp:b?.valPncp??null,v_pncp_mapa:b?.valPncp??-1,
    n_municipal:o.length,v_municipal:municipal}};
  });
@@ -83,6 +86,9 @@ export function criarMapaInvestimentos(d:Dados):maplibregl.Map|null{
  const fields:Record<string,{field:string;label:string;money:boolean}>={
   gov_count:{field:'n_gov',label:'Projetos Obrasgov com ponto oficial',money:false},
   gov_value:{field:'v_gov_mapa',label:'Investimento previsto Obrasgov',money:true},
+  gov_paid:{field:'v_gov_pago_mapa',label:'Pagamentos informados por notas de empenho Obrasgov (cobertura parcial)',money:true},
+  gov_committed:{field:'v_gov_empenhado_mapa',label:'Valores empenhados nas notas vinculadas Obrasgov',money:true},
+  gov_liquidated:{field:'v_gov_liquidado_mapa',label:'Valores liquidados nas notas vinculadas Obrasgov',money:true},
   pncp_count:{field:'n_pncp',label:'Contratos PNCP com referência de equipamento',money:false},
   pncp_value:{field:'v_pncp_mapa',label:'Valor global PNCP com referência de equipamento',money:true},
  };
@@ -115,6 +121,9 @@ export function criarMapaInvestimentos(d:Dados):maplibregl.Map|null{
     '<strong>'+texto(p.BAIRRO)+'</strong>'+
     '<div>Projetos Obrasgov com vínculo espacial: <b>'+inteiro(Number(p.n_gov))+'</b></div>'+
     '<div>Investimento previsto desses projetos: <b>'+moeda(p.v_gov==null?null:Number(p.v_gov))+'</b></div>'+
+    '<div>Empenhado em notas vinculadas Obrasgov: <b>'+moeda(p.v_gov_empenhado==null?null:Number(p.v_gov_empenhado))+'</b></div>'+
+    '<div>Liquidado em notas vinculadas Obrasgov: <b>'+moeda(p.v_gov_liquidado==null?null:Number(p.v_gov_liquidado))+'</b></div>'+
+    '<div>Pago em notas vinculadas Obrasgov: <b>'+moeda(p.v_gov_pago==null?null:Number(p.v_gov_pago))+'</b></div>'+
     '<div>Contratos PNCP com equipamento localizado: <b>'+inteiro(Number(p.n_pncp))+'</b></div>'+
     '<div>Valor global desses contratos: <b>'+moeda(p.v_pncp==null?null:Number(p.v_pncp))+'</b></div>'+
     '<small>Não somar previsto federal e contratado municipal. Não equivale a valor pago ou obra concluída.</small>').addTo(map);
