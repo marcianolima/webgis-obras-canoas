@@ -140,7 +140,7 @@ function renderFontes():string{
  ['Obras municipais','Prefeitura de Canoas / documentação de obras','https://www.canoas.rs.gov.br/','Cadastro e localização pendentes de extração documental verificada.','Pendente'],
  ['Contratos e licitações','Portal Nacional de Contratações Públicas','https://pncp.gov.br/api/consulta/swagger-ui/index.html','Requer conciliação entre órgão, objeto, obra e localização.','Pendente'],
  ['Investimentos federais','Obrasgov.br — georreferenciamento e execução','https://www.gov.br/obrasgov/pt-br/acesso-a-informacao/dados-abertos-obrasgov','Potencial integração por obra, com atenção ao vínculo territorial.','Pendente'],
- ['Finanças municipais','SICONFI — API Tesouro Nacional','https://apidatalake.tesouro.gov.br/docs/siconfi/','RREO/DCA/MSC: dados fiscais agregados não geocodificáveis automaticamente.','Pendente']
+ ['Finanças municipais','SICONFI — API Tesouro Nacional','https://apidatalake.tesouro.gov.br/docs/siconfi/','RREO-Anexo 01, linha Investimentos, excluídas operações intraorçamentárias, com etapas pagas/liquidadas/empenhadas.','Integrada']
  ];
  return head('Fontes, proveniência e qualidade','Metadados, conceitos e o que ainda depende de validação documental.')+
  nota('Nunca confundir <b>ausência de dado</b> com ausência de obra, despesa, rede ou serviço. O projeto não publica geometrias, valores ou percentuais territorializados sem fonte.')+
