@@ -52,7 +52,7 @@ def extrair(rows: list[dict], ano: int, bimestre: int, fonte: str) -> list[dict]
     for row in rows:
         if not isinstance(row, dict):
             continue
-        if normalizar(row.get("conta")) != "INVESTIMENTOS":
+        if normalizar(row.get("conta")) != "INVESTIMENTOS" or normalizar(row.get("cod_conta")) != "INVESTIMENTOS":
             continue
         coluna = normalizar(row.get("coluna"))
         if "ATE O BIMESTRE" not in coluna:
@@ -94,17 +94,22 @@ def main() -> None:
     hoje = dt.datetime.now(dt.timezone.utc)
     consultas_ok = 0
     for ano in range(2022, hoje.year + 1):
-        bimestre = 6 if ano < hoje.year else max(1, min(6, (hoje.month - 1) // 2))
-        try:
-            rows, url = consultar(ano, bimestre)
-        except Exception as exc:
-            print(f"Aviso: SICONFI {ano}, bimestre {bimestre}: {exc}", file=sys.stderr)
+        max_bim = 6 if ano < hoje.year else max(1, min(6, (hoje.month - 1) // 2))
+        periodos = [6] if ano < hoje.year else list(range(max_bim, 0, -1))
+        for bimestre in periodos:
+            try:
+                rows, url = consultar(ano, bimestre)
+            except Exception as exc:
+                print(f"Aviso: SICONFI {ano}, bimestre {bimestre}: {exc}", file=sys.stderr)
+                time.sleep(1.25)
+                continue
+            consultas_ok += 1
+            valores = extrair(rows, ano, bimestre, url)
+            for value in valores:
+                anterior[(value["ano"], value["categoria"])] = value
             time.sleep(1.25)
-            continue
-        consultas_ok += 1
-        for value in extrair(rows, ano, bimestre, url):
-            anterior[(value["ano"], value["categoria"])] = value
-        time.sleep(1.25)
+            if valores or ano < hoje.year:
+                break
     if consultas_ok == 0:
         raise RuntimeError("Nenhum demonstrativo acessível: preservar dados anteriores")
     result = {
