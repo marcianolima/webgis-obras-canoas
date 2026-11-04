@@ -1,0 +1,50 @@
+name: Atualizar licitações temáticas PNCP
+on:
+  push:
+    branches: [main]
+    paths:
+      - scripts/collect_licitacoes.py
+      - .github/workflows/refresh-licitacoes.yml
+  workflow_dispatch:
+  schedule:
+    - cron: '35 8 * * 2'
+permissions:
+  contents: write
+concurrency:
+  group: pncp-licitacoes
+  cancel-in-progress: false
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s tests -p 'test_*.py' -v
+      - run: python scripts/collect_licitacoes.py
+      - name: Validar órgão, identificadores e origem
+        run: |
+          python - <<'PY'
+          import json
+          j=json.load(open("public/data/licitacoes.json"))
+          assert j["cnpjOrgao"]=="88577416000118"
+          assert len({x["id"] for x in j["items"]})==len(j["items"])
+          assert all(x["registroOrigem"].startswith("https://pncp.gov.br/") for x in j["items"])
+          assert all(x["obra_fisica_estado"] is None for x in j["items"])
+          print(len(j["items"]),"licitações selecionadas")
+          PY
+      - name: Persistir catálogo auditado
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add public/data/licitacoes.json
+          if ! git diff --cached --quiet; then
+            git commit -m "data: atualizar licitações municipais de infraestrutura"
+            for i in 1 2 3 4 5; do
+              if git pull --rebase origin main && git push origin HEAD:main; then exit 0; fi
+              if [ "$i" -eq 5 ]; then exit 1; fi
+              sleep $((i*3))
+            done
+          fi
