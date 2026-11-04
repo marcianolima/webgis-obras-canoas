@@ -85,12 +85,46 @@ function renderEquipamentos():string{
  nota('O filtro abaixo usa a descrição/tipologia do <b>cadastro de obras</b>, não o inventário de equipamentos existentes na cidade. Uma escola existente não é automaticamente uma obra.')+
  '<section class="panel"><div class="panel-title"><h3>Intervenções em equipamentos públicos</h3><span class="chip">'+inteiro(eq.length)+' registros</span></div>'+tabelaObras(eq)+'</section>';
 }
+const classesContrato:Record<string,string>={obra_fisica_candidata:'Candidato a obra física',manutencao_infraestrutura:'Manutenção de infraestrutura',projeto_tecnico:'Projeto ou serviço técnico'};
+function contratoTabela(items:Dados['contratos']['items']):string{
+ if(!items.length)return vazio('Nenhum contrato neste filtro','Altere os filtros ou consulte os registros publicados no PNCP. O cadastro é uma triagem de candidatos, não prova de execução.');
+ return '<div class="table-wrap"><table><thead><tr><th>Objeto / instrumento</th><th>Categoria</th><th>Fornecedor</th><th>Local declarado</th><th>Valor global PNCP</th><th>Assinatura</th><th>Documento</th></tr></thead><tbody>'+
+ items.map(x=>'<tr><td><b>'+texto(x.objeto)+'</b><small>Nº '+texto(x.numero)+' · '+texto(x.id)+'</small></td><td><span class="chip">'+texto(classesContrato[x.classificacao??'']??'Classificação pendente')+'</span></td><td>'+texto(x.fornecedor)+'</td><td>'+texto(x.bairro??'Bairro não informado')+'</td><td>'+moeda(x.valor)+'</td><td>'+anoRef(x.data)+'</td><td>'+fonte(x.url_fonte,'PNCP')+'</td></tr>').join('')+'</tbody></table></div>';
+}
 function renderContratos():string{
- const c=dados.contratos.items;return head('Licitações, contratos e execução','Referências documentais e vinculação a obras somente quando houver identificador confiável.')+
- '<div class="kpis">'+card('Contratos documentados',inteiro(c.length),'Fonte vinculada','◈')+card('Valores contratuais conhecidos',moeda(c.length?c.reduce((s,x)=>s+(x.valor??0),0):null),'Não equivale a pagamento','R$','blue')+'</div>'+
- nota('Contrato <b>não é despesa paga</b>, proposta de licitação <b>não é obra executada</b>, e a localização do fornecedor <b>não é localização da obra</b>.')+
- '<section class="panel">'+(c.length?'<div class="table-wrap"><table><thead><tr><th>Objeto / ID</th><th>Fornecedor</th><th>Valor</th><th>Publicado</th><th>Origem</th></tr></thead><tbody>'+c.map(x=>'<tr><td><b>'+texto(x.objeto)+'</b><small>'+texto(x.numero)+'</small></td><td>'+texto(x.fornecedor)+'</td><td>'+moeda(x.valor)+'</td><td>'+anoRef(x.data)+'</td><td>'+fonte(x.url_fonte,'PNCP / origem')+'</td></tr>').join('')+'</tbody></table></div>':vazio('Contratos aguardando ingestão','O modelo de dados está preparado, mas nenhum contrato foi validado e incorporado à base publicada.'))+'</section>'+
- '<div class="link-grid"><div class="source-tile"><b>PNCP</b><p>Contratações e contratos públicos, com identificadores oficiais.</p>'+fonte('https://pncp.gov.br/app/contratos','Consultar portal')+'</div><div class="source-tile"><b>Obrasgov</b><p>Investimentos federais com informações físicas e georreferenciadas quando disponíveis.</p>'+fonte('https://www.gov.br/obrasgov/pt-br/acesso-a-informacao/dados-abertos-obrasgov','Acessar API')+'</div></div>';
+ const c=dados.contratos.items;
+ const nObras=c.filter(x=>x.classificacao==='obra_fisica_candidata').length;
+ const nMan=c.filter(x=>x.classificacao==='manutencao_infraestrutura').length;
+ const citados=c.filter(x=>x.bairro).length;
+ return head('Licitações, contratos e execução','Contratos públicos identificados no PNCP, classificados por natureza da intervenção e vinculados à localização somente quando expressa no objeto documental.')+
+ '<div class="kpis">'+card('Contratos associados ao tema',inteiro(c.length),'Triagem automática do PNCP','◈')+
+ card('Candidatos a obras físicas',inteiro(nObras),'Não confirma início ou conclusão','▤','blue')+
+ card('Serviços de manutenção',inteiro(nMan),'Infraestrutura urbana e drenagem','≈','gold')+
+ card('Com bairro explicitado',inteiro(citados),'Sem coordenadas inventadas','⌖','purple')+'</div>'+
+ nota('Esta base é de <b>contratos publicados no PNCP</b>, não cadastro de obras executadas. O valor global contratual <b>não equivale a gasto pago</b>, e a classificação por descrição é preliminar. O local aparece apenas quando o próprio documento menciona um bairro oficial.')+
+ '<section class="panel"><div class="panel-title"><h3>Contratos e projetos selecionados</h3><button id="export-contratos" class="btn soft" '+(c.length?'':'disabled')+'>Exportar CSV</button></div>'+
+ '<div class="filters"><label>Buscar no objeto, fornecedor ou identificador<input type="search" id="contract-search" placeholder="Ex.: reforma, dique, UBS..."/></label><label>Natureza<select id="contract-class"><option value="">Todas as categorias</option>'+Object.entries(classesContrato).map(([code,label])=>'<option value="'+texto(code)+'">'+texto(label)+'</option>').join('')+'</select></label><label>Bairro mencionado<select id="contract-bairro"><option value="">Todos os bairros</option>'+[...new Set(c.map(x=>x.bairro).filter((x):x is string=>!!x))].sort().map(b=>'<option value="'+texto(b)+'">'+texto(b)+'</option>').join('')+'</select></label></div>'+
+ '<div id="contratos-count" class="results">'+inteiro(c.length)+' contrato(s) classificados</div><div id="contratos-table">'+contratoTabela(c)+'</div>'+
+ '<small class="subtle">A triagem é textual. Pode conter falsos positivos e omitir contratos pertinentes; os objetos e valores devem ser conferidos na fonte. Uma obra não recebe status, prazo ou coordenada apenas porque existe contrato.</small></section>'+
+ '<div class="link-grid"><div class="source-tile"><b>PNCP</b><p>Contratações e contratos públicos, com identificadores e valores oficiais, sujeitos à revisão.</p>'+fonte('https://pncp.gov.br/app/contratos','Consultar portal')+'</div><div class="source-tile"><b>Obrasgov</b><p>Investimentos federais com informações físicas e localização quando disponíveis.</p>'+fonte('https://www.gov.br/obrasgov/pt-br/acesso-a-informacao/dados-abertos-obrasgov','Acessar dados')+'</div></div>';
+}
+function bindContratos():void{
+ const c=dados.contratos.items;
+ const update=()=>{
+  const term=slug((document.getElementById('contract-search') as HTMLInputElement)?.value??'');
+  const categoria=(document.getElementById('contract-class') as HTMLSelectElement)?.value??'';
+  const bairro=(document.getElementById('contract-bairro') as HTMLSelectElement)?.value??'';
+  const items=c.filter(x=>(!term||slug([x.objeto,x.numero,x.id,x.fornecedor,x.bairro].join(' ')).includes(term))&&(!categoria||x.classificacao===categoria)&&(!bairro||x.bairro===bairro));
+  document.getElementById('contratos-count')!.textContent=inteiro(items.length)+' contrato(s) exibidos · '+inteiro(c.length)+' classificados';
+  document.getElementById('contratos-table')!.innerHTML=contratoTabela(items);
+ };
+ document.getElementById('contract-search')?.addEventListener('input',update);
+ document.getElementById('contract-class')?.addEventListener('change',update);
+ document.getElementById('contract-bairro')?.addEventListener('change',update);
+ document.getElementById('export-contratos')?.addEventListener('click',()=>{
+  const headers=['id_pncp','numero','objeto','classificacao','bairro_documental','fornecedor','valor_global','data_assinatura','url_fonte'];
+  csvDownload('contratos-candidatos-pncp-canoas.csv',headers,c.map(x=>[x.id,x.numero,x.objeto,x.classificacao,x.bairro,x.fornecedor,x.valor,x.data,x.url_fonte]));
+ });
 }
 function renderFinancas():string{
  const f=dados.financas.observacoes;
@@ -162,6 +196,7 @@ function render():void{
  if(pagina==='saneamento')criarGrafico();
  if(pagina==='financas'){criarGraficoFinancas();document.getElementById('export-financas')?.addEventListener('click',exportarFinancas);}
  if(pagina==='obras')bindFiltros();
+ if(pagina==='contratos')bindContratos();
  if(pagina==='investimentos')document.getElementById('export-invest')?.addEventListener('click',exportarInvestimentos);
  if(pagina==='setores')document.getElementById('export-setores')?.addEventListener('click',exportarSetores);
 }
