@@ -75,16 +75,16 @@ export function criarMapaInvestimentos(d:Dados):maplibregl.Map|null{
   const o=obras.filter(x=>norm(x.properties.bairro??'')===norm(name));
   const municipal=totalVerificado(o,'valor_contratado');
   return {...f,properties:{...(f.properties??{}),
-   n_gov:b?.fed??0,v_gov:b?.valFed??null,
-   n_pncp:b?.pncp??0,v_pncp:b?.valPncp??null,
+   n_gov:b?.fed??0,v_gov:b?.valFed??null,v_gov_mapa:b?.valFed??-1,
+   n_pncp:b?.pncp??0,v_pncp:b?.valPncp??null,v_pncp_mapa:b?.valPncp??-1,
    n_municipal:o.length,v_municipal:municipal}};
  });
  const select=document.getElementById('investment-metric') as HTMLSelectElement|null;
  const fields:Record<string,{field:string;label:string;money:boolean}>={
   gov_count:{field:'n_gov',label:'Projetos Obrasgov com ponto oficial',money:false},
-  gov_value:{field:'v_gov',label:'Investimento previsto Obrasgov',money:true},
+  gov_value:{field:'v_gov_mapa',label:'Investimento previsto Obrasgov',money:true},
   pncp_count:{field:'n_pncp',label:'Contratos PNCP com referência de equipamento',money:false},
-  pncp_value:{field:'v_pncp',label:'Valor global PNCP com referência de equipamento',money:true},
+  pncp_value:{field:'v_pncp_mapa',label:'Valor global PNCP com referência de equipamento',money:true},
  };
  const maxVal=(field:string)=>Math.max(1,...features.map(f=>f.properties[field]).filter((v):v is number=>typeof v==='number'&&Number.isFinite(v)));
  let key=select?.value in fields?select!.value:'gov_count';
@@ -93,7 +93,7 @@ export function criarMapaInvestimentos(d:Dados):maplibregl.Map|null{
   const field=m.field;
   const max=maxVal(field);
   // Sem dado é cinza; uma contagem 0 é ausência de registros, não inexistência da atividade.
-  return ['case',['==',['get',field],null],'#e3e9ee',
+  return ['case',['<',['to-number',['get',field]],0],'#e3e9ee',
    ['interpolate',['linear'],['coalesce',['to-number',['get',field]],0],
     0,'#e8f2f3',max*0.3,'#8abec5',max,'#0f6178']];
  };
