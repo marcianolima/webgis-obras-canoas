@@ -1,7 +1,7 @@
 import sys,unittest
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/"scripts"))
-from collect_obrasgov import coordenadas_pin, fisica_atual,normalizar_projeto,bairro_ponto
+from collect_obrasgov import coordenadas_pin, fisica_atual,normalizar_projeto,bairro_ponto,resumir_empenhos
 class ObrasGovTests(unittest.TestCase):
  def setUp(self):
   self.bairros=[{"properties":{"BAIRRO":"Teste"},"geometry":{"type":"Polygon","coordinates":[[[-51.30,-30],[-51.00,-30],[-51.00,-29.8],[-51.30,-29.8],[-51.30,-30]]]}}]
@@ -25,4 +25,19 @@ class ObrasGovTests(unittest.TestCase):
   self.assertIsNone(f["geometry"])
   self.assertEqual(f["properties"]["valor_previsto"],100)
   self.assertIsNone(f["properties"]["percentual_execucao"])
+ def test_financeiro_separa_fases_e_exclui_notas_ambiguas(self):
+  sample=[
+   {"nr_empenho":"2022NE0001","ug_emitente":123,"sistema_origem_empenho":"CIPI","valor_empenho":100,"liquidado":50,"pago":40,"rppago":2},
+   {"nr_empenho":"2022NE0001","ug_emitente":123,"sistema_origem_empenho":"CIPI","valor_empenho":100,"liquidado":50,"pago":40,"rppago":2},
+   {"nr_empenho":"2022NE0002","ug_emitente":123,"sistema_origem_empenho":"CIPI","valor_empenho":10,"liquidado":10,"pago":10},
+   {"nr_empenho":"2022NE0002","ug_emitente":123,"sistema_origem_empenho":"CIPI","valor_empenho":10,"liquidado":9,"pago":10},
+   {"nr_empenho":None,"ug_emitente":123,"valor_empenho":1000}
+  ]
+  x=resumir_empenhos(sample)
+  self.assertEqual(x["qtd_notas_unicas"],1)
+  self.assertEqual(x["valor_empenhado_notas"],100)
+  self.assertEqual(x["valor_pago_notas"],40)
+  self.assertEqual(x["valor_restos_a_pagar_pago_notas"],2)
+  self.assertEqual(x["qtd_notas_ambiguas_excluidas"],1)
+  self.assertEqual(x["qtd_registros_sem_numero"],1)
 if __name__=="__main__":unittest.main()
