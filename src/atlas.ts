@@ -1,7 +1,7 @@
 import maplibregl from 'maplibre-gl';
 import * as echarts from 'echarts';
 import type {Feature,Geometry,Point,FeatureCollection} from 'geojson';
-import type {Dados,ObraFederal,ContratoEspacial,PendenciaLocal} from './data';
+import type {Dados,ObraFederal,ContratoEspacial} from './data';
 import {texto,moeda,numero,inteiro,bairroDaFeicao} from './data';
 
 type Fonte='obrasgov'|'pncp'|'municipal';
