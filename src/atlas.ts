@@ -98,7 +98,7 @@ function listar(itens:Item[],f:Filtro):Item[]{
  f.ordem==='status'?a.status.localeCompare(b.status,'pt-BR'):(b.valor??-1)-(a.valor??-1));
  return sorted;
 }
-function bairroStats(list:Item[]):Map<string,{fed:number;pncp:number;valFed:number|null;valPncp:number|null}>{
+export function bairroStats(list:Item[]):Map<string,{fed:number;pncp:number;valFed:number|null;valPncp:number|null}>{
  const map=new Map<string,{fed:number;pncp:number;valFed:number|null;valPncp:number|null}>();
  for(const item of list){
   if(!item.bairro||item.coords.length!==1)continue;
