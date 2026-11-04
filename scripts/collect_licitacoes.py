@@ -45,6 +45,7 @@ def consultar(start:dt.date,end:dt.date,mod:int,page:int=1)->dict:
             return j
         except HTTPError as exc:
             if exc.code not in (408,429,500,502,503,504) or i>=3:
+                print("PNCP_HTTP",exc.code,url,"BODY",exc.read(1200).decode("utf-8","replace"),file=sys.stderr)
                 raise
         except (URLError,TimeoutError):
             if i>=3:raise
