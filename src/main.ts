@@ -90,6 +90,15 @@ function renderEquipamentos():string{
  '<section class="panel"><h3>Referências de equipamentos vinculadas aos contratos</h3><p>Há '+inteiro(matched.length)+' contratos associados a um ponto cadastral de estabelecimento. Isso não demonstra execução da obra e não substitui os levantamentos de campo.</p></section>'+
  (eq.length?'<section class="panel"><h3>Equipamentos com cadastro municipal homologado</h3>'+tabelaObras(eq)+'</section>':'');
 }
+const classesContrato:Record<string,string>={obra_fisica_candidata:'Candidato a obra física',manutencao_infraestrutura:'Manutenção de infraestrutura',projeto_tecnico:'Projeto ou serviço técnico'};
+function contratoTabela(items:Dados['contratos']['items']):string{
+ if(!items.length)return vazio('Nenhum contrato neste filtro','Altere os critérios ou consulte o PNCP. Sem documentos não é possível afirmar que há obra executada.');
+ const georef=new Map(dados.intervencoes.features.filter(x=>x.geometry).map(x=>[x.properties.id,x.properties]));
+ return '<div class="table-wrap"><table><thead><tr><th>Objeto / contrato</th><th>Natureza</th><th>Local cadastral</th><th>Valor global</th><th>Assinatura</th><th>Fonte</th></tr></thead><tbody>'+
+ items.map(x=>{const local=georef.get(x.id);return '<tr><td><b>'+texto(x.objeto)+'</b><small>'+texto(x.numero)+' · '+texto(x.fornecedor)+'</small></td><td>'+texto(classesContrato[x.classificacao??'']??'Pendente')+'</td><td>'+texto(local?.equipamento??x.bairro??'Sem ponto validado')+
+ (local?.bairro?'<small>'+texto(local.bairro)+' · referência do equipamento</small>':'')+'</td><td>'+moeda(x.valor)+'</td><td>'+anoRef(x.data)+'</td><td>'+fonte(x.url_fonte,'PNCP')+'</td></tr>';}).join('')+
+ '</tbody></table></div>';
+}
 function renderContratos():string{
  const c=dados.contratos.items;
  const nObras=c.filter(x=>x.classificacao==='obra_fisica_candidata').length;
