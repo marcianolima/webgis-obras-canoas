@@ -115,7 +115,7 @@ def main() -> None:
     result = {
         "schemaVersion": 1, "updatedAt": hoje.isoformat(),
         "source": "https://apidatalake.tesouro.gov.br/docs/siconfi/",
-        "note": "Linha INVESTIMENTOS do RREO-Anexo 01; valores declarados pelo município. Não somar colunas PAGAS/LIQUIDADAS/EMPENHADAS ou atribuir a bairros. Linhas ambíguas são omitidas.",
+        "note": "Linha INVESTIMENTOS (sem InvestimentosIntra) do RREO-Anexo 01; valores declarados pelo município. Não somar colunas PAGAS/LIQUIDADAS/EMPENHADAS ou atribuir a bairros. Linhas ambíguas são omitidas.",
         "observacoes": sorted(anterior.values(), key=lambda x: (x["ano"], x["categoria"]), reverse=True),
         "anosConsultados": consultas_ok,
     }
