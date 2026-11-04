@@ -1,5 +1,5 @@
 import * as echarts from 'echarts';
-import {carregar,obrasList,texto,inteiro,numero,moeda,nomesStatus,nomesTemas,bairroDaFeicao,totalVerificado,anoRef,nomeCurto} from './data';
+import {carregar,obrasList,texto,inteiro,numero,moeda,nomesStatus,nomesTemas,bairroDaFeicao,totalVerificado,anoRef} from './data';
 import type {Dados,Obra,StatusObra,Indicador} from './data';
 import {criarMapa} from './map';
 import './style.css';
