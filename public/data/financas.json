@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-04T01:14:05.629605+00:00",
+  "updatedAt": "2026-11-04T01:15:19.843260+00:00",
   "source": "https://apidatalake.tesouro.gov.br/docs/siconfi/",
   "note": "Linha INVESTIMENTOS do RREO-Anexo 01; valores declarados pelo município. Não somar colunas PAGAS/LIQUIDADAS/EMPENHADAS ou atribuir a bairros. Linhas ambíguas são omitidas.",
   "observacoes": [
