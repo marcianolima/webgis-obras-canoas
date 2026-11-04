@@ -30,7 +30,7 @@ MODALIDADES=(4,5,6,8,9)
 
 def consultar(start:dt.date,end:dt.date,mod:int,page:int=1)->dict:
     params={"dataInicial":start.strftime("%Y%m%d"),"dataFinal":end.strftime("%Y%m%d"),
-       "codigoModalidadeContratacao":mod,"cnpj":CNPJ,"pagina":page,"tamanhoPagina":100}
+       "codigoModalidadeContratacao":mod,"cnpj":CNPJ,"pagina":page,"tamanhoPagina":15}
     url=URL+"?"+urlencode(params)
     for i in range(4):
         try:
