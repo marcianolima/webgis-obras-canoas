@@ -77,17 +77,17 @@ function resumoInvestimentosBairro(){
   const x=agg.get(b);
   const municipal=obras.filter(o=>slug(o.properties.bairro??'')===slug(b));
   return {bairro:b,fed:x?.fed??0,previsto:x?.valFed??null,
-   pncp:x?.pncp??0,contratado:x?.valPncp??null,
+   pncp:x?.pncp??0,contratado:x?.valPncp??null,pagoFederal:x?.pagoFed??null,empenhadoFederal:x?.empenhadoFed??null,liquidadoFederal:x?.liquidadoFed??null,
    obrasMunicipais:municipal.length,contratadoMunicipal:totalVerificado(municipal,'valor_contratado')};
  }).sort((a,b)=>(b.fed+b.pncp)-(a.fed+a.pncp)||a.bairro.localeCompare(b.bairro,'pt-BR'));
 }
 function tabelaValores():string{
  const rows=resumoInvestimentosBairro();
  return '<div class="table-wrap"><table><thead><tr>'+
- '<th>Bairro oficial GeoCanoas</th><th>Projetos Obrasgov localizados</th><th>Investimento previsto (federal)</th>'+
+ '<th>Bairro oficial GeoCanoas</th><th>Projetos Obrasgov localizados</th><th>Investimento previsto (federal)</th><th>Empenhado em notas federais</th><th>Liquidado em notas federais</th><th>Pago em notas federais</th>'+
  '<th>Contratos PNCP com referência</th><th>Valor global contratual PNCP</th><th>Obras municipais homologadas</th><th>Valor contratado municipal</th>'+
  '</tr></thead><tbody>'+rows.map(x=>'<tr><td><b>'+texto(x.bairro)+'</b></td>'+
- '<td>'+inteiro(x.fed)+'</td><td>'+moeda(x.previsto)+'</td>'+
+ '<td>'+inteiro(x.fed)+'</td><td>'+moeda(x.previsto)+'</td><td>'+moeda(x.empenhadoFederal)+'</td><td>'+moeda(x.liquidadoFederal)+'</td><td>'+moeda(x.pagoFederal)+'</td>'+
  '<td>'+inteiro(x.pncp)+'</td><td>'+moeda(x.contratado)+'</td>'+
  '<td>'+inteiro(x.obrasMunicipais)+'</td><td>'+moeda(x.contratadoMunicipal)+'</td></tr>').join('')+
  '</tbody></table></div>';
@@ -105,7 +105,7 @@ function renderInvestimentos():string{
  nota('O Obrasgov informa <b>valores de investimento previsto</b> e o PNCP informa <b>valores globais contratuais</b>. Não somar os valores entre fontes, tampouco tratá-los como execução financeira. Projetos com múltiplas localizações ou pontos genéricos não têm seu valor integral distribuído arbitrariamente por bairro. Zero registro não equivale a ausência de investimentos.')+
  '<section class="panel map-panel"><div class="panel-title"><h3>Mapa coroplético de investimentos e quantitativos</h3><span class="chip">Fonte e métrica selecionáveis</span></div>'+
  '<div class="filters"><label>Indicador territorial<select id="investment-metric">'+
- '<option value="gov_count">Nº de projetos Obrasgov</option><option value="gov_value">Investimento previsto Obrasgov</option>'+
+ '<option value="gov_count">Nº de projetos Obrasgov</option><option value="gov_value">Investimento previsto Obrasgov</option><option value="gov_paid">Pago em notas de empenho Obrasgov</option><option value="gov_committed">Empenhado em notas de empenho Obrasgov</option><option value="gov_liquidated">Liquidado em notas de empenho Obrasgov</option>'+
  '<option value="pncp_count">Nº de contratos PNCP localizados</option><option value="pncp_value">Valor global contratual PNCP</option>'+
  '</select></label></div>'+
  '<div class="map-frame"><div id="map-investimentos" role="application" aria-label="Mapa coroplético de Canoas com quantitativos e valores por bairro e origem"></div></div>'+
@@ -274,8 +274,8 @@ function csvDownload(filename:string,header:string[],rows:(string|number|null|un
 function exportarInvestimentos():void{
  const rows=resumoInvestimentosBairro();
  csvDownload('investimentos-e-contratos-bairros-canoas.csv',
- ['bairro','projetos_obrasgov','investimento_previsto_obrasgov','contratos_pncp_com_referencia','valor_contratos_pncp','obras_municipais_homologadas','contratado_municipal'],
- rows.map(x=>[x.bairro,x.fed,x.previsto,x.pncp,x.contratado,x.obrasMunicipais,x.contratadoMunicipal]));
+ ['bairro','projetos_obrasgov','investimento_previsto_obrasgov','empenhado_notas_obrasgov','liquidado_notas_obrasgov','pago_notas_obrasgov','contratos_pncp_com_referencia','valor_contratos_pncp','obras_municipais_homologadas','contratado_municipal'],
+ rows.map(x=>[x.bairro,x.fed,x.previsto,x.empenhadoFederal,x.liquidadoFederal,x.pagoFederal,x.pncp,x.contratado,x.obrasMunicipais,x.contratadoMunicipal]));
 }
 function exportarSetores():void{
  csvDownload('setores-censo2022-canoas.csv',['id_setor','bairro_ibge','populacao','densidade_hab_km2','domicilios_vagos_pct','renda_media_responsaveis_2022'],dados.setores.features.map(f=>{const p=f.properties??{};return [String(p.id??''),String(p.bairro_ibge??''),p.pop,p.dens_pop,p.perc_vagos,p.renda_media];}));
