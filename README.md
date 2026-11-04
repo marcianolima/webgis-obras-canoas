@@ -19,7 +19,7 @@ O código está identificado como **v1.0.0**. O sistema separa aquilo que está 
 4. Investimentos por bairro: agregações apenas de registros com vínculo territorial documentado; exportação CSV.
 5. Equipamentos públicos: obras em escolas, saúde e demais instalações, quando documentadas.
 6. Licitações e contratos: banco de candidatos de contratos do PNCP, sem confundir contrato e obra.
-7. Finanças: espaço para SICONFI e execução financeira com rubrica e fonte.
+7. Finanças: série de investimentos municipais RREO-Anexo 01/SICONFI, por exercício e etapa da despesa, com gráfico e exportação CSV.
 8. Saneamento: abastecimento de água, esgoto, resíduos sólidos e drenagem com indicadores **municipais** do SINISA.
 9. Atlas censitário: dados de contexto socioespacial do Censo 2022 e exportação CSV.
 10. Fontes: proveniência, abrangência e situação da ingestão.
