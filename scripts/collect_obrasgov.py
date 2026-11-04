@@ -31,9 +31,9 @@ LOCK = threading.Lock()
 LAST_REQUEST = [0.0]
 
 
-def requisitar(recurso: str, filtros: dict | None = None) -> dict:
-    """Limita a no máximo 55 solicitações/min; falhas não alteram o catálogo anterior."""
-    params = urlencode({**(filtros or {}), "pagina": 1, "tamanho_da_pagina": 200}) if recurso != "data-atualizacao" else ""
+def requisitar_pagina(recurso: str, filtros: dict | None = None, pagina: int = 1) -> dict:
+    """Limite de 55 requisições/minuto; idempotente GET; retry somente transitório."""
+    params = urlencode({**(filtros or {}), "pagina": pagina, "tamanho_da_pagina": 200}) if recurso != "data-atualizacao" else ""
     url = f"{BASE}/{recurso}" + ("?" + params if params else "")
     for retry in range(3):
         with LOCK:
@@ -50,16 +50,36 @@ def requisitar(recurso: str, filtros: dict | None = None) -> dict:
                 return data
             if not isinstance(data.get("data"), list):
                 raise ValueError("Resposta sem array data")
-            if data.get("total_pages") is None or data.get("total_items") is None:
-                raise ValueError("API sem total_pages/total_items, paginação não verificável")
-            if int(data["total_pages"]) > 1:
-                raise ValueError(f"Resultado paginado ({data['total_pages']} páginas); reduzir consulta ou paginar")
+            if not all(isinstance(data.get(k), int) for k in ("total_pages","total_items","page_number")):
+                raise ValueError("API sem metadados de paginação verificáveis")
+            if data["page_number"] != pagina:
+                raise ValueError(f"API retornou página {data['page_number']} em vez de {pagina}")
             return data
         except (HTTPError, URLError, TimeoutError) as exc:
             if retry == 2 or isinstance(exc, HTTPError) and exc.code not in (408, 429, 500, 502, 503, 504):
                 raise
             time.sleep(2 * (retry + 1))
     raise RuntimeError("Falha repetida ao consultar Obrasgov")
+
+
+def requisitar(recurso: str, filtros: dict | None = None) -> dict:
+    """Segue paginação oficial até o fim, com total e páginas consistentes."""
+    first = requisitar_pagina(recurso, filtros, 1)
+    if recurso == "data-atualizacao":
+        return first
+    total = first["total_items"]
+    pages = first["total_pages"]
+    if pages < 0 or pages > 80:
+        raise RuntimeError(f"Paginação Obrasgov excessiva ou inválida: {pages}")
+    all_rows = list(first["data"])
+    for pagina in range(2, pages + 1):
+        part = requisitar_pagina(recurso, filtros, pagina)
+        if part["total_pages"] != pages or part["total_items"] != total:
+            raise RuntimeError("Total de páginas ou registros mudou durante a coleta")
+        all_rows.extend(part["data"])
+    if len(all_rows) != total:
+        raise RuntimeError(f"Esperados {total} registros do Obrasgov, recebidos {len(all_rows)}")
+    return {**first, "data": all_rows}
 
 
 def dentro_anel(pt: tuple[float, float], pts: list) -> bool:
