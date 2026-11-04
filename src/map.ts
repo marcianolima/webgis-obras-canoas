@@ -2,7 +2,7 @@ import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import type {Dados,PropsObra} from './data';
 import type {Feature,Geometry} from 'geojson';
-import {texto,numero,inteiro,moeda,nomesStatus,bairroDaFeicao} from './data';
+import {texto,numero,inteiro,moeda,nomesStatus,bairroDaFeicao,obrasList,totalVerificado} from './data';
 
 type Metrica='dens_pop'|'perc_vagos'|'renda_media'|'pop';
 const METRICAS:Record<Metrica,{titulo:string;unidade:string;stops:[number,number,number,number]}> = {
@@ -58,5 +58,45 @@ export function criarMapa(d:Dados,initial:'obras'|'setores'='obras'):maplibregl.
  });
  map.on('error',e=>{const err=document.getElementById('map-error');if(err&&String(e.error?.message||'').includes('style'))err.textContent='A base cartográfica externa está indisponível. Os dados territoriais permanecem disponíveis para exportação.';});
  controls?.classList.add('loaded');
+ return map;
+}
+
+/** Mapa coroplético de contratos atribuíveis a bairros; N/D nunca é tratado como R$ 0. */
+export function criarMapaInvestimentos(d:Dados):maplibregl.Map|null{
+ const container=document.getElementById('map-investimentos');if(!container)return null;
+ const match=(s:string)=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
+ const obras=obrasList(d);
+ const features=d.bairros.features.map(f=>{
+  const name=bairroDaFeicao(f);
+  const obrasBairro=obras.filter(o=>match(o.properties.bairro??'')===match(name));
+  const val=totalVerificado(obrasBairro,'valor_contratado');
+  return {...f,properties:{...(f.properties??{}),valor_contratado:val,qtd_obras:obrasBairro.length}};
+ });
+ const values=features.map(f=>f.properties.valor_contratado).filter((x):x is number=>x!==null&&x!==undefined);
+ const max=Math.max(1,...values);
+ const map=new maplibregl.Map({container,style:'https://tiles.openfreemap.org/styles/liberty',center:[-51.177,-29.916],zoom:11.3,attributionControl:false});
+ map.addControl(new maplibregl.NavigationControl({showCompass:false}),'top-right');
+ map.addControl(new maplibregl.AttributionControl({compact:true}),'bottom-right');
+ map.on('load',()=>{
+  map.addSource('investimentos',{type:'geojson',data:{type:'FeatureCollection',features}});
+  map.addLayer({id:'investimentos-fill',type:'fill',source:'investimentos',paint:{
+   'fill-color':['case',['==',['get','valor_contratado'],null],'#dce3e9',['interpolate',['linear'],['to-number',['get','valor_contratado']],0],0,'#e3f4ef',max*0.25,'#8acdbc',max,'#0d6e80'],
+   'fill-opacity':0.76
+  }});
+  map.addLayer({id:'investimentos-border',type:'line',source:'investimentos',paint:{'line-color':'#176475','line-width':1.4}});
+  map.addLayer({id:'investimentos-labels',type:'symbol',source:'investimentos',minzoom:11,layout:{'text-field':['get','BAIRRO'],'text-size':11,'text-font':['Open Sans Bold']},paint:{'text-color':'#163947','text-halo-color':'#fff','text-halo-width':1.6}});
+  map.on('click','investimentos-fill',e=>{
+   const p=e.features?.[0]?.properties;
+   if(!p)return;
+   const nome=String(p.BAIRRO??'Não identificado');
+   const raw=p.valor_contratado;
+   const val=raw==null?null:Number(raw);
+   new maplibregl.Popup({maxWidth:'320px'}).setLngLat(e.lngLat).setHTML('<strong>'+texto(nome)+'</strong><div>Obras vinculadas: '+(Number(p.qtd_obras)||'Nenhum registro')+'</div><div>Valor contratado documentado: <b>'+moeda(val)+'</b></div><small>Sem registros válidos não é equivalente a investimento zero.</small>').addTo(map);
+  });
+  map.on('mouseenter','investimentos-fill',()=>{map.getCanvas().style.cursor='pointer';});
+  map.on('mouseleave','investimentos-fill',()=>{map.getCanvas().style.cursor='';});
+ });
+ const legend=document.getElementById('investimentos-legend');
+ if(legend){legend.textContent=values.length?'Escala relativa para valores conhecidos; cinza = dado não disponível.':'Todos os bairros sem valores de obras atribuídos e documentados (N/D).';}
  return map;
 }
