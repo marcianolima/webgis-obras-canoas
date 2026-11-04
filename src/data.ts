@@ -26,16 +26,27 @@ export type ObraFederal=Feature<Geometry|null,ObraFederalProps>;
 export type ContratoEspacial=Feature<Geometry|null,ContratoEspacialProps>;
 export type PendenciaLocal={id_contrato:string;numero:string|null;titulo:string;classe:string;bairro_declarado:string|null;motivo:string;equipamentos_candidatos:string[];url_fonte:string};
 export type QualidadeGeocodificacao={schemaVersion:number;metadata:{consultadoEm:string|null;totalContratos?:number;comPontoReferencia?:number;semPontoReferencia?:number};pendencias:PendenciaLocal[]};
+export type Licitacao={
+ id:string;objeto:string;classe:string;modalidade:string;modalidadeId:number|null;
+ numero:string;processo:string;situacao:string;situacao_origem:string;
+ estimado:number|null;homologado:number|null;publicacao:string|null;
+ inicioPropostas:string|null;fimPropostas:string|null;registroOrigem:string;
+ urlSistemaOrigem:string|null;geolocalizacao:null;bairro:null;obra_fisica_estado:null;
+};
+export type Licitacoes={
+ schemaVersion:number;updatedAt:string|null;source:string;cnpjOrgao:string;
+ note:string;items:Licitacao[];
+};
 export type Financas={updatedAt:string|null;note:string;observacoes:{ano:number;categoria:string;valor:number;fonte:string}[]};
-export type Dados={bairros:FeatureCollection;setores:FeatureCollection;obras:FeatureCollection<Geometry|null,PropsObra>;saneamento:Saneamento;contratos:Contratos;financas:Financas;obrasgov:FeatureCollection<Geometry|null,ObraFederalProps>;intervencoes:FeatureCollection<Geometry|null,ContratoEspacialProps>;qualidadeGeo:QualidadeGeocodificacao;falhas:string[]};
+export type Dados={bairros:FeatureCollection;setores:FeatureCollection;obras:FeatureCollection<Geometry|null,PropsObra>;saneamento:Saneamento;contratos:Contratos;financas:Financas;obrasgov:FeatureCollection<Geometry|null,ObraFederalProps>;intervencoes:FeatureCollection<Geometry|null,ContratoEspacialProps>;qualidadeGeo:QualidadeGeocodificacao;licitacoes:Licitacoes;falhas:string[]};
 const url=(name:string)=>import.meta.env.BASE_URL+'data/'+name;
 async function read<T>(name:string):Promise<T>{const r=await fetch(url(name));if(!r.ok)throw new Error(name+': HTTP '+r.status);return r.json() as Promise<T>;}
 export async function carregar():Promise<Dados>{
- const jobs=await Promise.allSettled([read<FeatureCollection>('bairros-oficiais.geojson'),read<FeatureCollection>('censo2022-setores.geojson'),read<FeatureCollection<Geometry|null,PropsObra>>('obras.geojson'),read<Saneamento>('saneamento.json'),read<Contratos>('contratos.json'),read<Financas>('financas.json'),read<FeatureCollection<Geometry|null,ObraFederalProps>>('obrasgov.geojson'),read<FeatureCollection<Geometry|null,ContratoEspacialProps>>('intervencoes.geojson'),read<QualidadeGeocodificacao>('geocodificacao-pendencias.json')]);
- const nomes=['Bairros oficiais','Setores 2022','Obras','Saneamento','Contratos','Finanças','Obrasgov','Intervenções PNCP','Pendências de localização'];
+ const jobs=await Promise.allSettled([read<FeatureCollection>('bairros-oficiais.geojson'),read<FeatureCollection>('censo2022-setores.geojson'),read<FeatureCollection<Geometry|null,PropsObra>>('obras.geojson'),read<Saneamento>('saneamento.json'),read<Contratos>('contratos.json'),read<Financas>('financas.json'),read<FeatureCollection<Geometry|null,ObraFederalProps>>('obrasgov.geojson'),read<FeatureCollection<Geometry|null,ContratoEspacialProps>>('intervencoes.geojson'),read<QualidadeGeocodificacao>('geocodificacao-pendencias.json'),read<Licitacoes>('licitacoes.json')]);
+ const nomes=['Bairros oficiais','Setores 2022','Obras','Saneamento','Contratos','Finanças','Obrasgov','Intervenções PNCP','Pendências de localização','Licitações PNCP'];
  const falhas=jobs.flatMap((x,i)=>x.status==='rejected'?[nomes[i]+': '+String(x.reason)]:[]);
  const take=<T>(i:number,fallback:T):T=>jobs[i].status==='fulfilled'?(jobs[i] as PromiseFulfilledResult<unknown>).value as T:fallback;
- return {bairros:take(0,{type:'FeatureCollection',features:[]}),setores:take(1,{type:'FeatureCollection',features:[]}),obras:take(2,{type:'FeatureCollection',features:[]}),saneamento:take(3,{fonte:'',fonteUrl:'',fonteOficial:'',referencia:'',abrangencia:'',observacao:'',indicadores:[]}),contratos:take(4,{updatedAt:null,note:'',items:[]}),financas:take(5,{updatedAt:null,note:'',observacoes:[]}),obrasgov:take(6,{type:'FeatureCollection',features:[]}),intervencoes:take(7,{type:'FeatureCollection',features:[]}),qualidadeGeo:take(8,{schemaVersion:1,metadata:{consultadoEm:null},pendencias:[]}),falhas};
+ return {bairros:take(0,{type:'FeatureCollection',features:[]}),setores:take(1,{type:'FeatureCollection',features:[]}),obras:take(2,{type:'FeatureCollection',features:[]}),saneamento:take(3,{fonte:'',fonteUrl:'',fonteOficial:'',referencia:'',abrangencia:'',observacao:'',indicadores:[]}),contratos:take(4,{updatedAt:null,note:'',items:[]}),financas:take(5,{updatedAt:null,note:'',observacoes:[]}),obrasgov:take(6,{type:'FeatureCollection',features:[]}),intervencoes:take(7,{type:'FeatureCollection',features:[]}),qualidadeGeo:take(8,{schemaVersion:1,metadata:{consultadoEm:null},pendencias:[]}),licitacoes:take(9,{schemaVersion:1,updatedAt:null,source:'',cnpjOrgao:'88577416000118',note:'',items:[]}),falhas};
 }
 export function texto(valor:unknown):string{return String(valor??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]??c));}
 export const inteiro=(n:number|null|undefined):string=>n==null?'N/D':new Intl.NumberFormat('pt-BR',{maximumFractionDigits:0}).format(n);
