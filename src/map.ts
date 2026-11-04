@@ -70,7 +70,7 @@ export function criarMapaInvestimentos(d:Dados):maplibregl.Map|null{
   const name=bairroDaFeicao(f);
   const obrasBairro=obras.filter(o=>match(o.properties.bairro??'')===match(name));
   const val=totalVerificado(obrasBairro,'valor_contratado');
-  return {...f,properties:{...(f.properties??{}),valor_contratado:val,qtd_obras:obrasBairro.length}};
+  return {...f,properties:{...(f.properties??{}),valor_contratado:val,valor_mapa:val??-1,qtd_obras:obrasBairro.length}};
  });
  const values=features.map(f=>f.properties.valor_contratado).filter((x):x is number=>x!==null&&x!==undefined);
  const max=Math.max(1,...values);
@@ -80,7 +80,7 @@ export function criarMapaInvestimentos(d:Dados):maplibregl.Map|null{
  map.on('load',()=>{
   map.addSource('investimentos',{type:'geojson',data:{type:'FeatureCollection',features}});
   map.addLayer({id:'investimentos-fill',type:'fill',source:'investimentos',paint:{
-   'fill-color':['case',['==',['get','valor_contratado'],null],'#dce3e9',['interpolate',['linear'],['to-number',['get','valor_contratado']],0],0,'#e3f4ef',max*0.25,'#8acdbc',max,'#0d6e80'],
+   'fill-color':['case',['<',['to-number',['get','valor_mapa']],0],'#dce3e9',['interpolate',['linear'],['to-number',['get','valor_mapa']],0],0,'#e3f4ef',max*0.25,'#8acdbc',max,'#0d6e80'],
    'fill-opacity':0.76
   }});
   map.addLayer({id:'investimentos-border',type:'line',source:'investimentos',paint:{'line-color':'#176475','line-width':1.4}});
