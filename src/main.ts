@@ -3,22 +3,24 @@ import {carregar,obrasList,texto,inteiro,numero,moeda,nomesStatus,nomesTemas,bai
 import type {Dados,Obra,StatusObra,Indicador} from './data';
 import {criarMapa,criarMapaInvestimentos} from './map';
 import {atlasHtml,auditHtml,mountAtlas,mountAudit,itensAtlas,bairroStats} from './atlas';
+import {licitacoesHtml,mountLicitacoes} from './licitacoes';
 import './style.css';
 
-type Page='painel'|'mapa'|'obras'|'investimentos'|'equipamentos'|'contratos'|'financas'|'saneamento'|'setores'|'fontes'|'geocodificacao';
+type Page='painel'|'mapa'|'obras'|'investimentos'|'equipamentos'|'contratos'|'licitacoes'|'financas'|'saneamento'|'setores'|'fontes'|'geocodificacao';
 const LINKS:[Page,string,string][]=[
  ['painel','Painel municipal','▦'],['mapa','Mapa de obras','⌖'],['obras','Cadastro de obras','▤'],
- ['investimentos','Investimentos por bairro','▥'],['equipamentos','Equipamentos públicos','▧'],['contratos','Licitações e contratos','◈'],
+ ['investimentos','Investimentos por bairro','▥'],['equipamentos','Equipamentos públicos','▧'],['contratos','Contratos PNCP','◈'],['licitacoes','Licitações e editais','▥'],
  ['financas','Finanças públicas','◫'],['geocodificacao','Revisão de localizações','◎'],['saneamento','Saneamento básico','≈'],['setores','Atlas censitário 2022','▩'],['fontes','Fontes e metodologia','ⓘ']
 ];
-const TITULOS:Record<Page,string>={painel:'Panorama territorial',mapa:'Mapa de obras e infraestrutura',obras:'Cadastro de obras públicas',investimentos:'Investimentos por bairro',equipamentos:'Equipamentos públicos',contratos:'Licitações e contratos',financas:'Finanças e execução orçamentária',saneamento:'Indicadores de saneamento básico',setores:'Atlas censitário 2022',fontes:'Fontes, métodos e qualidade',geocodificacao:'Qualidade do georreferenciamento'};
-const AGRUPAMENTOS=[{name:'VISÃO TERRITORIAL',pages:['painel','mapa','obras','investimentos','equipamentos']},{name:'GESTÃO E TRANSPARÊNCIA',pages:['contratos','financas']},{name:'SANEAMENTO E TERRITÓRIO',pages:['saneamento','setores']},{name:'SOBRE OS DADOS',pages:['geocodificacao','fontes']}];
+const TITULOS:Record<Page,string>={painel:'Panorama territorial',mapa:'Mapa de obras e infraestrutura',obras:'Cadastro de obras públicas',investimentos:'Investimentos por bairro',equipamentos:'Equipamentos públicos',contratos:'Contratos públicos',licitacoes:'Licitações e contratações',financas:'Finanças e execução orçamentária',saneamento:'Indicadores de saneamento básico',setores:'Atlas censitário 2022',fontes:'Fontes, métodos e qualidade',geocodificacao:'Qualidade do georreferenciamento'};
+const AGRUPAMENTOS=[{name:'VISÃO TERRITORIAL',pages:['painel','mapa','obras','investimentos','equipamentos']},{name:'GESTÃO E TRANSPARÊNCIA',pages:['licitacoes','contratos','financas']},{name:'SANEAMENTO E TERRITÓRIO',pages:['saneamento','setores']},{name:'SOBRE OS DADOS',pages:['geocodificacao','fontes']}];
 const app=document.querySelector<HTMLDivElement>('#app');
 if(!app)throw new Error('Elemento #app não encontrado');
 const dados:Dados=await carregar(),obras=obrasList(dados);
 const bairros=dados.bairros.features.map(bairroDaFeicao).sort((a,b)=>a.localeCompare(b,'pt-BR'));
 let pagina:Page='painel',busca='',bairro='',status='',mapa:ReturnType<typeof criarMapa>=null,charts:echarts.ECharts[]=[];
 let destruirAtlas:(()=>void)|null=null;
+let destruirLicitacoes:(()=>void)|null=null;
 let tema=localStorage.getItem('obras-tema')==='escuro'?'escuro':'claro';
 document.documentElement.dataset.theme=tema;
 const slug=(s:string)=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR').trim();
@@ -207,7 +209,8 @@ function renderFontes():string{
  ['Setores 2022 (659)','IBGE — malha definitiva e agregados de setores','https://www.ibge.gov.br/geociencias/organizacao-do-territorio/malhas-territoriais/26565-malhas-de-setores-censitarios-divisoes-intramunicipais.html','GeoJSON recortado e simplificado; indicadores do Censo 2022.','Integrada'],
  ['Saneamento municipal','SINISA 2024 / Instituto Água e Saneamento',dados.saneamento.fonteUrl,'Indicadores por município; módulos água, esgoto, resíduos e drenagem.','Integrada'],
  ['Obras municipais','Prefeitura de Canoas / documentação de obras','https://www.canoas.rs.gov.br/','Cadastro administrativo municipal ainda depende de homologação: PNCP não substitui fiscalização de obras.','Pendente'],
- ['Contratos e licitações','Portal Nacional de Contratações Públicas','https://pncp.gov.br/api/consulta/swagger-ui/index.html','Contratos municipais classificados; referências de equipamentos CNES/SEDUC separadas de execução física.','Integrada (contratos)'],
+ ['Contratos','Portal Nacional de Contratações Públicas','https://pncp.gov.br/api/consulta/swagger-ui/index.html','Contratos municipais classificados; referências de equipamentos CNES/SEDUC separadas de execução física.','Integrada (contratos)'],
+ ['Licitações e editais','PNCP · Contratações por publicação','https://pncp.gov.br/api/consulta/swagger-ui/index.html','Editais e contratações diretas municipais, valores estimados/homologados, modalidade e situação de compra, sem status físico.','Integrada (licitações)'],
  ['Investimentos federais','Obrasgov.br — API 2026','https://api-publica.obrasgov.gestao.gov.br/obras/docs','Projetos oficiais vinculados a Canoas por cod_ibge, com geometrias internas validadas, situação, execução física e valor previsto.','Integrada'],
  ['Finanças municipais','SICONFI — API Tesouro Nacional','https://apidatalake.tesouro.gov.br/docs/siconfi/','RREO-Anexo 01, linha Investimentos, excluídas operações intraorçamentárias, com etapas pagas/liquidadas/empenhadas.','Integrada']
  ];
@@ -216,10 +219,10 @@ function renderFontes():string{
  '<section class="panel"><div class="table-wrap"><table><thead><tr><th>Base</th><th>Origem</th><th>Cobertura e limitações</th><th>Situação</th></tr></thead><tbody>'+sources.map(x=>'<tr><td><b>'+texto(x[0])+'</b></td><td>'+fonte(x[2],x[1])+'</td><td>'+texto(x[3])+'</td><td><span class="chip">'+texto(x[4])+'</span></td></tr>').join('')+'</tbody></table></div></section>'+
  '<section class="panel"><h3>Política de transparência territorial</h3><p>Atribuição de investimentos somente por georreferenciamento da própria intervenção ou bairro explicitamente documentado, nunca pelo endereço da sede do fornecedor. Valores contratados não representam execução financeira. Dados setoriais do Censo 2022 não devem ser utilizados como distribuição espacial fictícia dos indicadores municipais do SINISA.</p><p>O cadastro de obras usa uma rotina reprodutível de importação em CSV, com validação de coordenadas, faixa de valores, identificadores e origem. Consulte o README e o guia de metodologia do repositório.</p><p>'+fonte('https://github.com/marcianolima/webgis-obras-canoas','Código e documentação do projeto')+'</p></section>';
 }
-function contentPage():string{switch(pagina){case 'painel':return renderPainel();case 'mapa':return renderMapa();case 'obras':return renderObras();case 'investimentos':return renderInvestimentos();case 'equipamentos':return renderEquipamentos();case 'contratos':return renderContratos();case 'financas':return renderFinancas();case 'saneamento':return renderSaneamento();case 'setores':return renderSetores();case 'fontes':return renderFontes();case 'geocodificacao':return auditHtml(dados);}}
+function contentPage():string{switch(pagina){case 'painel':return renderPainel();case 'mapa':return renderMapa();case 'obras':return renderObras();case 'investimentos':return renderInvestimentos();case 'equipamentos':return renderEquipamentos();case 'contratos':return renderContratos();case 'licitacoes':return licitacoesHtml(dados);case 'financas':return renderFinancas();case 'saneamento':return renderSaneamento();case 'setores':return renderSetores();case 'fontes':return renderFontes();case 'geocodificacao':return auditHtml(dados);}}
 function navHtml():string{return AGRUPAMENTOS.map(g=>'<div class="nav-group"><div class="nav-label">'+g.name+'</div>'+g.pages.map(p=>{const [id,n,ic]=LINKS.find(x=>x[0]===p)!;return '<button data-nav="'+id+'" class="nav-item '+(pagina===id?'active':'')+'" aria-current="'+(pagina===id?'page':'false')+'"><span class="nav-icon">'+ic+'</span><span>'+n+'</span></button>';}).join('')+'</div>').join('');}
 function render():void{
- destruirAtlas?.();destruirAtlas=null;mapa?.remove();mapa=null;for(const c of charts)c.dispose();charts=[];
+ destruirAtlas?.();destruirAtlas=null;destruirLicitacoes?.();destruirLicitacoes=null;mapa?.remove();mapa=null;for(const c of charts)c.dispose();charts=[];
  app!.innerHTML='<div class="layout"><aside class="sidebar" id="sidebar"><div class="brand"><div class="brand-mark">⌖</div><div><b>GeoCanoas</b><small>OBRAS E SANEAMENTO</small></div></div><nav aria-label="Navegação principal">'+navHtml()+'</nav><div class="sidebar-footer"><b>Transparência territorial</b><p>Canoas / Rio Grande do Sul</p><small>Dados oficiais, sem localizações simuladas</small></div></aside><div id="mobile-backdrop" class="backdrop"></div><div class="main"><header class="topbar"><div class="top-left"><button class="icon-button mobile-menu" id="menu-toggle" aria-label="Abrir navegação" aria-controls="sidebar">☰</button><div><small>WEBGIS / CANOAS</small><h1>'+texto(TITULOS[pagina])+'</h1></div></div><div class="top-actions"><span class="data-badge">Dados rastreáveis</span><button class="icon-button" id="theme-toggle" aria-label="Alternar tema" title="Alternar tema">'+(tema==='claro'?'☾':'☼')+'</button></div></header><main id="workspace" class="workspace">'+contentPage()+'</main><footer>GeoCanoas · Cartografia oficial / IBGE · Fontes com indicação de ano e abrangência · <a href="https://github.com/marcianolima/webgis-obras-canoas" target="_blank" rel="noopener noreferrer">Código aberto ↗</a></footer></div></div>';
  app!.querySelectorAll<HTMLButtonElement>('[data-nav]').forEach(b=>b.addEventListener('click',()=>choosePage(b.dataset.nav as Page)));
  app!.querySelectorAll<HTMLButtonElement>('[data-go]').forEach(b=>b.addEventListener('click',()=>choosePage(b.dataset.go as Page)));
@@ -229,6 +232,7 @@ function render():void{
  if(pagina==='setores')mapa=criarMapa(dados,'setores');
  if(pagina==='mapa'||pagina==='obras'||pagina==='equipamentos')destruirAtlas=mountAtlas(dados,()=>choosePage('geocodificacao'));
  if(pagina==='geocodificacao')mountAudit(dados);
+ if(pagina==='licitacoes')destruirLicitacoes=mountLicitacoes(dados);
  if(pagina==='investimentos')mapa=criarMapaInvestimentos(dados);
  if(pagina==='saneamento')criarGrafico();
  if(pagina==='financas'){criarGraficoFinancas();document.getElementById('export-financas')?.addEventListener('click',exportarFinancas);}
