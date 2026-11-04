@@ -3,6 +3,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import type {Dados,PropsObra} from './data';
 import type {Feature,Geometry} from 'geojson';
 import {texto,numero,inteiro,moeda,nomesStatus,bairroDaFeicao,obrasList,totalVerificado} from './data';
+import {itensAtlas,bairroStats} from './atlas';
 
 type Metrica='dens_pop'|'perc_vagos'|'renda_media'|'pop';
 const METRICAS:Record<Metrica,{titulo:string;unidade:string;stops:[number,number,number,number]}> = {
@@ -62,44 +63,65 @@ export function criarMapa(d:Dados,initial:'obras'|'setores'='obras'):maplibregl.
 }
 
 /** Mapa coroplético de contratos atribuíveis a bairros; N/D nunca é tratado como R$ 0. */
+/** Agrega por bairro apenas projetos/contratos com vínculo espacial; valores não são somados entre origens. */
 export function criarMapaInvestimentos(d:Dados):maplibregl.Map|null{
  const container=document.getElementById('map-investimentos');if(!container)return null;
- const match=(s:string)=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
+ const summary=bairroStats(itensAtlas(d));
+ const norm=(s:string)=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
  const obras=obrasList(d);
  const features=d.bairros.features.map(f=>{
   const name=bairroDaFeicao(f);
-  const obrasBairro=obras.filter(o=>match(o.properties.bairro??'')===match(name));
-  const val=totalVerificado(obrasBairro,'valor_contratado');
-  const contratos=d.contratos.items.filter(c=>c.classificacao==='obra_fisica_candidata'&&match(c.bairro??'')===match(name));
-  const pncp=contratos.length?contratos.reduce((sum,c)=>sum+(c.valor??0),0):null;
-  return {...f,properties:{...(f.properties??{}),valor_contratado:val,valor_mapa:val??-1,qtd_obras:obrasBairro.length,qtd_pncp:contratos.length,valor_pncp:pncp}};
+  const b=summary.get(name);
+  const o=obras.filter(x=>norm(x.properties.bairro??'')===norm(name));
+  const municipal=totalVerificado(o,'valor_contratado');
+  return {...f,properties:{...(f.properties??{}),
+   n_gov:b?.fed??0,v_gov:b?.valFed??null,
+   n_pncp:b?.pncp??0,v_pncp:b?.valPncp??null,
+   n_municipal:o.length,v_municipal:municipal}};
  });
- const values=features.map(f=>f.properties.valor_contratado).filter((x):x is number=>x!==null&&x!==undefined);
- const max=Math.max(1,...values);
+ const select=document.getElementById('investment-metric') as HTMLSelectElement|null;
+ const fields:Record<string,{field:string;label:string;money:boolean}>={
+  gov_count:{field:'n_gov',label:'Projetos Obrasgov com ponto oficial',money:false},
+  gov_value:{field:'v_gov',label:'Investimento previsto Obrasgov',money:true},
+  pncp_count:{field:'n_pncp',label:'Contratos PNCP com referência de equipamento',money:false},
+  pncp_value:{field:'v_pncp',label:'Valor global PNCP com referência de equipamento',money:true},
+ };
+ const maxVal=(field:string)=>Math.max(1,...features.map(f=>f.properties[field]).filter((v):v is number=>typeof v==='number'&&Number.isFinite(v)));
+ let key=select?.value in fields?select!.value:'gov_count';
+ const paint=():unknown[]=>{
+  const m=fields[key];
+  const field=m.field;
+  const max=maxVal(field);
+  // Sem dado é cinza; uma contagem 0 é ausência de registros, não inexistência da atividade.
+  return ['case',['==',['get',field],null],'#e3e9ee',
+   ['interpolate',['linear'],['coalesce',['to-number',['get',field]],0],
+    0,'#e8f2f3',max*0.3,'#8abec5',max,'#0f6178']];
+ };
  const map=new maplibregl.Map({container,style:'https://tiles.openfreemap.org/styles/liberty',center:[-51.177,-29.916],zoom:11.3,attributionControl:false});
  map.addControl(new maplibregl.NavigationControl({showCompass:false}),'top-right');
  map.addControl(new maplibregl.AttributionControl({compact:true}),'bottom-right');
+ const legend=document.getElementById('investimentos-legend');
+ function updateLegend(){if(legend)legend.textContent=fields[key].label+'. Contagem/valor atribuídos somente com geografia verificável; cinza = N/D. PNCP não comprova execução.';}
+ select?.addEventListener('change',()=>{if(select.value in fields){key=select.value;updateLegend();if(map.getLayer('investimentos-fill'))map.setPaintProperty('investimentos-fill','fill-color',paint() as never);}});
  map.on('load',()=>{
   map.addSource('investimentos',{type:'geojson',data:{type:'FeatureCollection',features}});
-  map.addLayer({id:'investimentos-fill',type:'fill',source:'investimentos',paint:{
-   'fill-color':['case',['<',['to-number',['get','valor_mapa']],0],'#dce3e9',['interpolate',['linear'],['to-number',['get','valor_mapa']],0],0,'#e3f4ef',max*0.25,'#8acdbc',max,'#0d6e80'],
-   'fill-opacity':0.76
-  }});
-  map.addLayer({id:'investimentos-border',type:'line',source:'investimentos',paint:{'line-color':['case',['>', ['to-number',['get','qtd_pncp']],0],'#d08b25','#176475'],'line-width':['case',['>', ['to-number',['get','qtd_pncp']],0],2.9,1.4]}});
-  map.addLayer({id:'investimentos-labels',type:'symbol',source:'investimentos',minzoom:11,layout:{'text-field':['get','BAIRRO'],'text-size':11,'text-font':['Open Sans Bold']},paint:{'text-color':'#163947','text-halo-color':'#fff','text-halo-width':1.6}});
+  map.addLayer({id:'investimentos-fill',type:'fill',source:'investimentos',paint:{'fill-color':paint() as never,'fill-opacity':0.72}});
+  map.addLayer({id:'investimentos-border',type:'line',source:'investimentos',paint:{'line-color':'#135e75','line-width':1.55}});
+  map.addLayer({id:'investimentos-labels',type:'symbol',source:'investimentos',minzoom:11,layout:{'text-field':['get','BAIRRO'],'text-size':11,'text-font':['Open Sans Bold']},paint:{'text-color':'#143b4c','text-halo-color':'#fff','text-halo-width':1.7}});
   map.on('click','investimentos-fill',e=>{
    const p=e.features?.[0]?.properties;
    if(!p)return;
-   const nome=String(p.BAIRRO??'Não identificado');
-   const raw=p.valor_contratado;
-   const val=raw==null?null:Number(raw);
-   const pncp=p.valor_pncp==null?null:Number(p.valor_pncp);
-   new maplibregl.Popup({maxWidth:'320px'}).setLngLat(e.lngLat).setHTML('<strong>'+texto(nome)+'</strong><div>Obras vinculadas: '+(Number(p.qtd_obras)||'Nenhum registro')+'</div><div>Valor contratado documentado: <b>'+moeda(val)+'</b></div><div>Contratos PNCP candidatos com bairro explícito: '+(Number(p.qtd_pncp)||'Nenhum')+'</div><div>Valor global desses contratos (não pago): <b>'+moeda(pncp)+'</b></div><small>Contrato não comprova execução; ausência não equivale a investimento zero.</small>').addTo(map);
+   new maplibregl.Popup({maxWidth:'340px'}).setLngLat(e.lngLat).setHTML(
+    '<strong>'+texto(p.BAIRRO)+'</strong>'+
+    '<div>Projetos Obrasgov com vínculo espacial: <b>'+inteiro(Number(p.n_gov))+'</b></div>'+
+    '<div>Investimento previsto desses projetos: <b>'+moeda(p.v_gov==null?null:Number(p.v_gov))+'</b></div>'+
+    '<div>Contratos PNCP com equipamento localizado: <b>'+inteiro(Number(p.n_pncp))+'</b></div>'+
+    '<div>Valor global desses contratos: <b>'+moeda(p.v_pncp==null?null:Number(p.v_pncp))+'</b></div>'+
+    '<small>Não somar previsto federal e contratado municipal. Não equivale a valor pago ou obra concluída.</small>').addTo(map);
   });
   map.on('mouseenter','investimentos-fill',()=>{map.getCanvas().style.cursor='pointer';});
   map.on('mouseleave','investimentos-fill',()=>{map.getCanvas().style.cursor='';});
  });
- const legend=document.getElementById('investimentos-legend');
- if(legend){legend.textContent=values.length?'Preenchimento: obras verificadas. Cinza: N/D. Contorno ocre: contrato candidato com bairro explícito.':'Sem obras com valores territorializados (cinza). Contorno ocre: contratos candidatos PNCP com bairro explicitado.';}
+ updateLegend();
  return map;
 }
