@@ -1,5 +1,10 @@
 name: Update PNCP candidates
 on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/refresh-pncp.yml
+      - scripts/collect_pncp.py
   workflow_dispatch:
   schedule:
     - cron: '25 9 * * 1'
