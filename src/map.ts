@@ -1,6 +1,7 @@
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import type {Dados} from './data';
+import type {Dados,PropsObra} from './data';
+import type {Feature,Geometry} from 'geojson';
 import {texto,numero,inteiro,moeda,nomesStatus,bairroDaFeicao} from './data';
 
 type Metrica='dens_pop'|'perc_vagos'|'renda_media'|'pop';
@@ -42,7 +43,7 @@ export function criarMapa(d:Dados,initial:'obras'|'setores'='obras'):maplibregl.
  map.on('load',()=>{
   map.addSource('bairros',{type:'geojson',data:d.bairros});
   map.addSource('setores',{type:'geojson',data:d.setores});
-  map.addSource('obras',{type:'geojson',data:d.obras});
+  map.addSource('obras',{type:'geojson',data:{type:'FeatureCollection',features:d.obras.features.filter((f):f is Feature<Geometry,PropsObra>=>f.geometry!==null)}});
   map.addLayer({id:'bairro-preenchimento',type:'fill',source:'bairros',paint:{'fill-color':'#41a8b0','fill-opacity':0.065}});
   map.addLayer({id:'setores-preenchimento',type:'fill',source:'setores',paint:{'fill-color':cores(metrica) as never,'fill-opacity':0.73}});
   map.addLayer({id:'setores-contorno',type:'line',source:'setores',paint:{'line-color':'#f8fafc','line-width':0.4,'line-opacity':0.7}});
