@@ -1,0 +1,104 @@
+{
+  "schemaVersion": 1,
+  "municipio": "Canoas",
+  "codigoIbge": "4304606",
+  "fonte": "SINISA 2024, conforme síntese do Instituto Água e Saneamento",
+  "fonteUrl": "https://www.aguaesaneamento.org.br/municipios-e-saneamento/rs/canoas",
+  "fonteOficial": "https://www.gov.br/cidades/pt-br/acesso-a-informacao/acoes-e-programas/saneamento/sinisa/resultados-sinisa",
+  "referencia": "SINISA 2024 (coleta; consultar metadados do módulo para ano-base)",
+  "abrangencia": "municipal",
+  "observacao": "Indicadores agregados para Canoas. Não distribuir pelos 18 bairros ou 659 setores sem microdados territoriais verificáveis.",
+  "indicadores": [
+    {
+      "id": "agua_atendimento",
+      "nome": "População atendida com água",
+      "tema": "agua",
+      "valor": 97.3,
+      "unidade": "%",
+      "descricao": "Percentual da população total atendida por serviço de abastecimento de água.",
+      "referencia": "SINISA 2024"
+    },
+    {
+      "id": "agua_sem_acesso",
+      "nome": "População sem acesso à água",
+      "tema": "agua",
+      "valor": 9826,
+      "unidade": "habitantes",
+      "referencia": "SINISA 2024"
+    },
+    {
+      "id": "agua_perdas",
+      "nome": "Perdas na distribuição de água",
+      "tema": "agua",
+      "valor": 46.6,
+      "unidade": "%",
+      "referencia": "SINISA 2024"
+    },
+    {
+      "id": "agua_hidrometracao",
+      "nome": "Índice de hidrometração",
+      "tema": "agua",
+      "valor": 99.9,
+      "unidade": "%",
+      "referencia": "SINISA 2024"
+    },
+    {
+      "id": "esgoto_atendimento",
+      "nome": "População atendida com esgoto",
+      "tema": "esgoto",
+      "valor": 62,
+      "unidade": "%",
+      "descricao": "Cobertura do serviço de esgotamento sanitário; não confundir com coleta ou tratamento sobre o esgoto gerado.",
+      "referencia": "SINISA 2024"
+    },
+    {
+      "id": "esgoto_sem_coleta",
+      "nome": "População sem coleta de esgoto",
+      "tema": "esgoto",
+      "valor": 136778,
+      "unidade": "habitantes",
+      "referencia": "SINISA 2024"
+    },
+    {
+      "id": "esgoto_coleta",
+      "nome": "Índice de coleta de esgoto",
+      "tema": "esgoto",
+      "valor": 21.9,
+      "unidade": "%",
+      "referencia": "SINISA 2024"
+    },
+    {
+      "id": "esgoto_tratamento_gerado",
+      "nome": "Esgoto tratado em relação ao gerado",
+      "tema": "esgoto",
+      "valor": 21.9,
+      "unidade": "%",
+      "referencia": "SINISA 2024"
+    },
+    {
+      "id": "residuos_coleta",
+      "nome": "População atendida com coleta domiciliar",
+      "tema": "residuos",
+      "valor": 100,
+      "unidade": "%",
+      "referencia": "SINISA 2024"
+    },
+    {
+      "id": "drenagem_risco",
+      "nome": "Domicílios sujeitos a risco de inundação",
+      "tema": "drenagem",
+      "valor": 43.5,
+      "unidade": "%",
+      "descricao": "Indicador municipal declarado; não identifica quais domicílios ou bairros estão sujeitos ao risco.",
+      "referencia": "SINISA 2024"
+    },
+    {
+      "id": "drenagem_rede",
+      "nome": "Vias urbanas com rede pluvial subterrânea",
+      "tema": "drenagem",
+      "valor": 96.8,
+      "unidade": "%",
+      "referencia": "SINISA 2024"
+    }
+  ]
+}

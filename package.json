@@ -1,0 +1,22 @@
+{
+  "name": "webgis-obras-canoas",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "test": "node --test tests/*.test.mjs",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "maplibre-gl": "^4.7.1",
+    "echarts": "^5.6.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2",
+    "vite": "^6.0.5",
+    "@types/node": "^22.10.0"
+  }
+}

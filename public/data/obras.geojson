@@ -1,0 +1,11 @@
+{
+  "type": "FeatureCollection",
+  "metadata": {
+    "schemaVersion": 1,
+    "updatedAt": null,
+    "status": "aguardando-dados-validados",
+    "note": "Nenhuma obra publicada nesta versão; não representa inexistência de obras em Canoas.",
+    "source": ""
+  },
+  "features": []
+}
