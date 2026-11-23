@@ -1,10 +1,66 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-04T01:24:21.651136+00:00",
+  "updatedAt": "2026-11-23T21:35:28.612531+00:00",
   "source": "https://pncp.gov.br/api/consulta/v1/contratos",
   "orgaoCnpj": "88577416000118",
   "note": "TRIAGEM CONSERVADORA: contratos candidatos de obras físicas, manutenção de infraestrutura e projetos técnicos. Não são execução física confirmada, despesa paga nem obras geolocalizadas. Bairro somente quando mencionado explicitamente no objeto documental.",
   "items": [
+    {
+      "id": "88577416000118-2-000567/2026",
+      "numero": "215",
+      "objeto": "Contratação de pessoa jurídica da área de\r\narquitetura e/ou engenharia para elaboração de\r\nprojetos executivos, bem como a execução de\r\nobra do CEU da Cultura Mathias Velho, em\r\natendimento à demanda da Secretaria\r\nMunicipal de Cultura e Turismo",
+      "fornecedor": "ANIMO ENGENHARIA E CONSTRUCAO LTDA",
+      "valor": 2600888.93,
+      "data": "2026-11-12",
+      "url_fonte": "https://pncp.gov.br/api/pncp/v1/orgaos/88577416000118/contratos/2026/567",
+      "obra_id": null,
+      "classificacao": "obra_fisica_candidata",
+      "codigo_municipio_unidade": "4304606",
+      "numeroControlePNCP": "88577416000118-2-000567/2026",
+      "bairro": null
+    },
+    {
+      "id": "88577416000118-2-000568/2026",
+      "numero": "423",
+      "objeto": "Contratação em regime de empreitada por preço unitário, de pessoa jurídica da área de engenharia, para restauração de subestação de 112,5kVA para a EMEI PROFESSORA ROSÂNGELA CUNHA LANZONI, em atendimento à demanda da Secretaria Municipal de Educação.",
+      "fornecedor": "PHS CONSTRUCOES LTDA",
+      "valor": 84249.69,
+      "data": "2026-11-12",
+      "url_fonte": "https://pncp.gov.br/api/pncp/v1/orgaos/88577416000118/contratos/2026/568",
+      "obra_id": null,
+      "classificacao": "obra_fisica_candidata",
+      "codigo_municipio_unidade": "4304606",
+      "numeroControlePNCP": "88577416000118-2-000568/2026",
+      "bairro": null
+    },
+    {
+      "id": "88577416000118-2-000531/2026",
+      "numero": "421",
+      "objeto": "Contratação de pessoa jurídica da área de\r\narquitetura e/ou engenharia para elaboração do\r\nprojeto básico e executivo de obras de\r\nengenharia, estudos e pareceres necessários à\r\nrecomposição, ampliação e modernização do\r\nsistema de proteção hidráulica e estrutural, em\r\natendimento à demanda da Secretaria\r\nMunicipal de Obras e Reconstrução.",
+      "fornecedor": "ENCOP ENGENHARIA LTDA",
+      "valor": 297420.82,
+      "data": "2026-11-06",
+      "url_fonte": "https://pncp.gov.br/api/pncp/v1/orgaos/88577416000118/contratos/2026/531",
+      "obra_id": null,
+      "classificacao": "obra_fisica_candidata",
+      "codigo_municipio_unidade": "4304606",
+      "numeroControlePNCP": "88577416000118-2-000531/2026",
+      "bairro": null
+    },
+    {
+      "id": "88577416000118-2-000532/2026",
+      "numero": "323",
+      "objeto": "Contratação de pessoa jurídica da área de\r\nengenharia, para implantação de Sinalização\r\nViária Vertical, Horizontal e Dispositivos\r\nAuxiliares nas vias do Município de\r\nCanoas/RS, em atendimento à demanda da\r\nSecretaria Municipal de Mobilidade Urbana.",
+      "fornecedor": "FORTE SERVICOS E SINALIZACAO LTDA",
+      "valor": 45552.99,
+      "data": "2026-11-06",
+      "url_fonte": "https://pncp.gov.br/api/pncp/v1/orgaos/88577416000118/contratos/2026/532",
+      "obra_id": null,
+      "classificacao": "obra_fisica_candidata",
+      "codigo_municipio_unidade": "4304606",
+      "numeroControlePNCP": "88577416000118-2-000532/2026",
+      "bairro": null
+    },
     {
       "id": "88577416000118-2-000481/2026",
       "numero": "302",
@@ -889,7 +945,7 @@
     }
   ],
   "janelaConsultada": {
-    "inicio": "2026-07-07",
-    "fim": "2026-11-04"
+    "inicio": "2026-07-26",
+    "fim": "2026-11-23"
   }
 }
